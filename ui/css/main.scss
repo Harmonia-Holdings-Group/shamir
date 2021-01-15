@@ -351,10 +351,10 @@ footer {
     grid-row-end: 6;
 
     .container {
-      width: 1400px;
+      width: 500px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 2fr;
+      grid-template-columns: 1fr 1fr;
     }
   }
 }

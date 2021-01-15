@@ -364,12 +364,12 @@ footer p a {
     grid-row-end: 6;
   }
   footer .container {
-    width: 1400px;
+    width: 500px;
     margin: 0 auto;
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 2fr;
-        grid-template-columns: 1fr 2fr;
+    -ms-grid-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
   }
 }
 /*# sourceMappingURL=main.css.map */
