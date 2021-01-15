@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSSS | Shamir Secret Sharing Scheme</title>
+
+  <script src="https://kit.fontawesome.com/fc88fc2226.js" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;800&family=Source+Code+Pro:wght@200;300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+
+</head>
+<body>
+  <header>
+    <h1>SSSS</h1>
+    <h2>Shamir Secret Sharing Scheme <i class="fas fa-user-lock"></i></i></h2>
+  </header>
+
+  <div id="nav">
+    <div><a href="" class="active">Encrypt</a></div>
+    <div><a href="">Decrypt</a></div>
+  </div>
+
+  <div id="main">
+    <section class="container" id="encryption-input">
+      <div class="file-input">
+        <input type="file" id="file-input">
+        <label for="file-input"><i class="fas fa-file"></i><span>Select file to encrypt</span></label>
+      </div>
+      <div class="input-group">
+        <p class="accent">Key shares</p>
+        <input type="number" min="3" placeholder="Key shares" id="key-shares-input">
+        <label for="key-shares-input">Number of keys to generate after encryption. Min: 3</label>
+      </div>
+      <div class="input-group">
+        <p class="accent">Keys threshold</p>
+        <input type="number" placeholder="Key threshold" id="key-threshold-input">
+        <label for="key-threshold-input">
+          Minimum number of keys required to decrypt the file, must bet least 3, and at most
+          the number of key shares.
+        </label>
+      </div>
+      <div class="input-group">
+        <p class="accent">Encryption password</p>
+        <input type="password" placeholder="Enter a master password" id="encryption-password">
+        <label for="encryption-password">Master password to encrypt the file.</label>
+      </div>
+      <div class="button">
+        <button id="encrypt-button">Encrypt <i class="fas fa-play"></i></button>
+      </div>
+    </section>
+  
+    <section class="container" id="encryption-keys">
+      <p class="subsection-title">Keys <i class="fas fa-copy"></i></p>
+      <div class="keys">
+        <ol>
+          <li>4cc5f7b5c54c734ac438533cd759e3666ef07e0d1eacbba8d0d8014194b5baed</li>
+          <li>2e3ef35156b51ca141c9c140a4fc7b7bb7a22830179a44c2f14cdb0683072018</li>
+          <li>c08fa64a85b6e8b50121e3b0bc28daa3ecd4602208ce75d95a17f5ac0b48fde9</li>
+          <li>e4a36597639e924f304d2346cb09ef4dbf08d0e13defd2eac8223d5dd2a4eefc</li>
+          <li>3260d7837e598eb1e535eb02c8430eaace398f5973a11bf3ee22813517a17087</li>
+          <li>9ea3abf55c9e8dd7a68749d8dd712d0eb12a5abde6541e9ec2fd82b0e3185345</li>
+          <li>cf9c7a40e37282274e34346f87f7507366d0491f7df11b26d08a71d694ae5af1</li>
+          <li>9f0c3d9d744f0e67060c95cb968fb6d98ab6e7e2ef8a333ea03fe1ea5ecc4afe</li>
+          <li>c2379b0692a84392840972a6fc09554842423e2db321089c10f5416ddf649735</li>
+          <li>2b81392a86b2bbc6d6be7f9bd164a1823a15634fb85c9f469df2548a8272af10</li>
+          <li>21ab61aa97b812bfd675465e4f342536c1d1e74276fc8b40b5e260dd4e613f3c</li>
+          <li>7f60c09a4a643b2aab329b03cd4907a4793bef4ac98efb0cef6bf161865c1598</li>
+          <li>ae1b3aacc97ea81d6abf3b8e7d245a14019eea917d739dbc81007b60059689e</li>
+          <li>6be7fa35996bafc58261b597d652073728e8f768f42e17c21853717f0deee5cc</li>
+          <li>77bfead44b0555b9dcaec316696c9e5994ee558e88353e4e9d905efc1fc8db19</li>
+          <li>4cc6f9860c801a9072dad3d34f53d9dfc460258edc8588b6224f2b1a9f10fc9b</li>
+          <li>d84a9291fd834b1452d5c007b3682162fd0c62bfb0eefe40fae5c7f661ded4ca</li>
+        </ol>
+      </div>
+    </section>
+  
+    <section class="container" id="encrypted-file">
+      <p class="subsection-title">Encrypted file <i class="fas fa-copy"></i></p>
+      <p><a href="data:application/octet-stream,charset=utf-16le;base64,hola">Save file <i class="fas fa-file-download"></i></a></p>
+      <p class="small">
+        Base64 encoded:
+      </p>
+      <p class="encoded">/9j/4AAQSkZJRgABAQEASABIAAD/4gxYSUNDX1BST0ZJTEUAAQEAAAxITGlubwIQAABtbnRyUkdCIFhZWiAHzgACAAkABgAxAABhY3NwTVNGVAAAAABJRUMgc1JHQgAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLUhQICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABFjcHJ0AAABUAAAADNkZXNjAAABhAAAAGx3dHB0AAAB8AAAABRia3B0AAACBAAAABRyWFlaAAACGAAAABRnWFlaAAACLAAAABRiWFlaAAACQAAAABRkbW5kAAACVAAAAHBkbWRkAAACxAAAAIh2dWVkAAADTAAAAIZ2aWV3AAAD1AAAACRsdW1pAAAD+AAAABRtZWFzAAAEDAAAACR0ZWNoAAAEMAAAAAxyVFJDAAAEPAAACAxnVFJDAAAEPAAACAxiVFJDAAAEPAAACAx0ZXh0AAAAAENvcHlyaWdodCAoYykgMTk5OCBIZXdsZXR0LVBhY2thcmQgQ29tcGFueQAAZGVzYwAAAAAAAAASc1JHQiBJRUM2MTk2Ni0yLjEAAAAAAAAAAAAAABJzUkdCIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWFlaIAAAAAAAAPNRAAEAAAABFsxYWVogAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABvogAAOPUAAAOQWFlaIAAAAAAAAGKZAAC3hQAAGNpYWVogAAAAAAAAJKAAAA</p>
+    </section>
+  </div>
+  </section>
+
+  <script>
+    fileInputs = document.querySelectorAll('input[type=file]');
+    Array.prototype.forEach.call(fileInputs, function(input) {
+      var label = input.nextElementSibling,
+          labelValue = label.innerHTML;
+
+      input.addEventListener('change', function(e) {
+        var fileName = e.target.value.split('\\').pop();
+
+        if (fileName) {
+          label.querySelector('span').innerHTML = fileName;
+          label.querySelector('i').className += " green"
+        } else {
+          label.innerHTML = labelValue;
+        }
+      })
+    })
+  </script>
+</body>
+</html>
