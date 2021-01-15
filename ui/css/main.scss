@@ -35,6 +35,21 @@ header {
   border-bottom: 1px solid #000;
 }
 
+footer {
+  margin-top: 6rem;
+  border-top: 1px solid #000;
+
+  .footer-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  p a {
+    padding-left: 1rem;
+    font-size: .8rem;
+  }
+}
+
 #nav {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -170,7 +185,6 @@ header {
   }
 }
 
-
 .subsection-title {
   margin-top: 1.5rem;
   margin-bottom: .3rem;
@@ -189,6 +203,13 @@ header {
   i:hover {
     opacity: .6;
   }
+}
+
+.inline-code {
+  font-family: 'Source Code Pro', monospace;
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: -1px;
 }
 
 #encryption-keys {
@@ -250,41 +271,20 @@ header {
   }
 }
 
-@media only screen and (min-width: 1024px) {
-  #main {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2 1fr);
-
-    #encryption-input {
-      grid-column-start: 1;
-      grid-column-end: 2;
-      grid-row-start: 1;
-      grid-row-end: 3;
-    }
-
-    #encryption-keys {
-      grid-column-start: 2;
-      grid-column-end: 5;
-      grid-row-start: 1;
-      grid-row-end: 2;
-    }
-
-    #encrypted-file {
-      grid-column-start: 2;
-      grid-column-end: 5;
-      grid-row-start: 2;
-      grid-row-end: 3;
-    }
+#info {
+  h3 {
+    font-size: 1.8rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgb(77, 77, 77);
   }
 }
 
-@media only screen and (min-width: 1500px) {
+@media only screen and (min-width: 1024px) {
   body {
     display: grid;
-    grid-template-columns: 1fr 1400px 1fr;
-    grid-template-rows: repeat(2 1fr);
+    grid-template-columns: 1fr minmax(1024px, 1400px) 1fr;
   }
+
   header {
     grid-column-start: 1;
     grid-column-end: 4;
@@ -303,7 +303,6 @@ header {
     grid-row-start: 2;
     grid-row-end: 3;
 
-    width: 400px;
     border-right: 1px solid rgb(77, 77, 77);
   }
 
@@ -314,7 +313,7 @@ header {
     grid-row-end: 4;
 
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: minmax(340px, 420px) 1fr;
 
     #encryption-input {
       grid-column-start: 1;
@@ -325,16 +324,37 @@ header {
 
     #encryption-keys {
       grid-column-start: 2;
-      grid-column-end: 6;
+      grid-column-end: 3;
       grid-row-start: 1;
       grid-row-end: 2;
     }
 
     #encrypted-file {
       grid-column-start: 2;
-      grid-column-end: 6;
+      grid-column-end: 3;
       grid-row-start: 2;
       grid-row-end: 3;
+    }
+  }
+
+  #info {
+    grid-row-start: 4;
+    grid-row-end: 5;
+    grid-column-start: 2;
+    grid-column-end: 3;
+  }
+
+  footer {
+    grid-column-start: 1;
+    grid-column-end: 4;
+    grid-row-start: 51;
+    grid-row-end: 6;
+
+    .container {
+      width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
     }
   }
 }

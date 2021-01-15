@@ -35,6 +35,21 @@ header {
   border-bottom: 1px solid #000;
 }
 
+footer {
+  margin-top: 6rem;
+  border-top: 1px solid #000;
+}
+
+footer .footer-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+footer p a {
+  padding-left: 1rem;
+  font-size: .8rem;
+}
+
 #nav {
   display: -ms-grid;
   display: grid;
@@ -202,6 +217,13 @@ header {
   opacity: .6;
 }
 
+.inline-code {
+  font-family: 'Source Code Pro', monospace;
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: -1px;
+}
+
 #encryption-keys .keys {
   background-color: #efefef;
   padding: .5rem;
@@ -255,49 +277,18 @@ header {
   word-break: break-word !important;
 }
 
-@media only screen and (min-width: 1024px) {
-  #main {
-    display: -ms-grid;
-    display: grid;
-    -ms-grid-columns: (1fr)[4];
-        grid-template-columns: repeat(4, 1fr);
-    -ms-grid-rows: (1fr)[2];
-        grid-template-rows: repeat(2 1fr);
-  }
-  #main #encryption-input {
-    -ms-grid-column: 1;
-        grid-column-start: 1;
-    grid-column-end: 2;
-    -ms-grid-row: 1;
-        grid-row-start: 1;
-    grid-row-end: 3;
-  }
-  #main #encryption-keys {
-    -ms-grid-column: 2;
-        grid-column-start: 2;
-    grid-column-end: 5;
-    -ms-grid-row: 1;
-        grid-row-start: 1;
-    grid-row-end: 2;
-  }
-  #main #encrypted-file {
-    -ms-grid-column: 2;
-        grid-column-start: 2;
-    grid-column-end: 5;
-    -ms-grid-row: 2;
-        grid-row-start: 2;
-    grid-row-end: 3;
-  }
+#info h3 {
+  font-size: 1.8rem;
+  padding-top: 2rem;
+  border-top: 1px solid #4d4d4d;
 }
 
-@media only screen and (min-width: 1500px) {
+@media only screen and (min-width: 1024px) {
   body {
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 1400px 1fr;
-        grid-template-columns: 1fr 1400px 1fr;
-    -ms-grid-rows: (1fr)[2];
-        grid-template-rows: repeat(2 1fr);
+    -ms-grid-columns: 1fr minmax(1024px, 1400px) 1fr;
+        grid-template-columns: 1fr minmax(1024px, 1400px) 1fr;
   }
   header {
     -ms-grid-column: 1;
@@ -318,7 +309,6 @@ header {
     -ms-grid-row: 2;
         grid-row-start: 2;
     grid-row-end: 3;
-    width: 400px;
     border-right: 1px solid #4d4d4d;
   }
   #main {
@@ -330,8 +320,8 @@ header {
     grid-row-end: 4;
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: (1fr)[5];
-        grid-template-columns: repeat(5, 1fr);
+    -ms-grid-columns: minmax(340px, 420px) 1fr;
+        grid-template-columns: minmax(340px, 420px) 1fr;
   }
   #main #encryption-input {
     -ms-grid-column: 1;
@@ -344,7 +334,7 @@ header {
   #main #encryption-keys {
     -ms-grid-column: 2;
         grid-column-start: 2;
-    grid-column-end: 6;
+    grid-column-end: 3;
     -ms-grid-row: 1;
         grid-row-start: 1;
     grid-row-end: 2;
@@ -352,10 +342,34 @@ header {
   #main #encrypted-file {
     -ms-grid-column: 2;
         grid-column-start: 2;
-    grid-column-end: 6;
+    grid-column-end: 3;
     -ms-grid-row: 2;
         grid-row-start: 2;
     grid-row-end: 3;
+  }
+  #info {
+    -ms-grid-row: 4;
+        grid-row-start: 4;
+    grid-row-end: 5;
+    -ms-grid-column: 2;
+        grid-column-start: 2;
+    grid-column-end: 3;
+  }
+  footer {
+    -ms-grid-column: 1;
+        grid-column-start: 1;
+    grid-column-end: 4;
+    -ms-grid-row: 51;
+        grid-row-start: 51;
+    grid-row-end: 6;
+  }
+  footer .container {
+    width: 1400px;
+    margin: 0 auto;
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: 1fr 2fr;
+        grid-template-columns: 1fr 2fr;
   }
 }
 /*# sourceMappingURL=main.css.map */
