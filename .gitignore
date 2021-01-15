@@ -13,3 +13,32 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+################################################################
+#                              UI                              #
+################################################################
+# JS
+ui/node_modules/
+ui/dist/
+
+# Cache
+ui/.eslintcache
+
+# dependencies
+ui/node_modules
+ui/.pnp
+ui/.pnp.js
+
+# production
+ui/build
+
+# misc
+ui/.DS_Store
+ui/.env.local
+ui/.env.development.local
+ui/.env.test.local
+ui/.env.production.local
+
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*
