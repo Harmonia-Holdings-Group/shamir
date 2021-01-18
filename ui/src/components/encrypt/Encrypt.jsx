@@ -15,6 +15,9 @@ class Encrypt extends React.Component {
       encryptionPassword: "",
       error: "",
       fileInputMessage: "Select file to encrypt",
+      genKey: "",
+      cipherContentB64: "",
+      cipherContentRAW: Uint8Array,
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -54,23 +57,24 @@ class Encrypt extends React.Component {
       error: ""
     })
     
-    const key = global.genKey(this.state.encryptionPassword);
-    console.log(key);
-
-    const fileContent = this.loadFileContent(this.fileInput.current.files[0]);
-    console.log(fileContent);
-  }
-
-  loadFileContent(file) {
     const reader = new FileReader();
-    let content8 = Uint8Array;
     reader.onload = function(e) {
       const fileContent = e.target.result;
-      content8 = new Uint8Array(fileContent);
-      console.log(content8);
+      const content8 = new Uint8Array(fileContent);
+      const wasmOut = global.GoEncrypt(this.state.encryptionPassword, content8)
+      if (wasmOut.length !== 2) {
+        this.setState({error: `(unexpected) ${wasmOut}`});
+        return;
+      }
+
+      this.setState({
+        genKey: btoa(wasmOut[0]),
+        cipherContentB64: btoa(wasmOut[1]),
+        cipherContentRAW: wasmOut[1],
+      });
     }
-    reader.readAsArrayBuffer(file);
-    return content8;
+    reader.onload.bind(this);
+    reader.readAsArrayBuffer(this.fileInput.current.files[0]);
   }
 
   handleFileSelection(event) {
