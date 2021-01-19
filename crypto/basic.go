@@ -30,5 +30,5 @@ func Encrypt(key string, content []byte) ([]byte, []byte, error) {
 	}
 
 	cipherContent := aesGCM.Seal(nonce, nonce, content, nil)
-	return cipherContent, k, nil
+	return k, cipherContent, nil
 }

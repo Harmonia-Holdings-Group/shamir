@@ -11,7 +11,7 @@ import (
 // https://primes.utm.edu/curios/page.php?number_id=3746
 var P *big.Int
 
-func init() {
+func notinit() {
 	// pFactorization is the fundamental factorization of P:
 	// 312^2 + 312^3 + 312^5 + 312^7 + 312^11 + 312^13 + 312^17 + 312^19 + 312^23 + 312^29 + 312^31 + 1
 	pFactorization := [12][2]float64{

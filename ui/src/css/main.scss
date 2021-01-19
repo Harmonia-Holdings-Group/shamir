@@ -63,6 +63,23 @@ footer {
   }
 }
 
+.small {
+  margin: 0;
+  padding: 0;
+  font-size: .7rem;
+  color: #383838;
+  font-style: italic;
+
+  span {
+    display: block;
+    padding-left: 2rem;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    font-weight: bold;
+  }
+}
+
 @media only screen and (min-width: 1024px) {
   body {
     display: grid;
@@ -75,8 +92,10 @@ footer {
     grid-row-start: 3;
     grid-row-end: 4;
 
-    display: grid;
-    grid-template-columns: minmax(340px, 420px) 1fr;
+    .root-container {
+      display: grid;
+      grid-template-columns: minmax(340px, 420px) 1fr;
+    }
   }
 
   header {

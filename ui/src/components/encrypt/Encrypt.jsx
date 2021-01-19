@@ -1,6 +1,4 @@
-import { bindExpression, blockStatement } from '@babel/types';
-import { timingSafeEqual } from 'crypto';
-import React, { useState } from 'react';
+import React from 'react';
 
 // Styles
 import './styles.scss';
@@ -16,9 +14,9 @@ class Encrypt extends React.Component {
       error: "",
       fileInputMessage: "Select file to encrypt",
       genKey: "",
-      cipherContentB64: "",
-      cipherContentRAW: Uint8Array,
-      reader: new FileReader(),
+      showResult: false,
+      cipherContent: "",
+      showAllCipher: false,
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -62,7 +60,6 @@ class Encrypt extends React.Component {
     reader.onload = function(e) {
       const fileContent = e.target.result;
       const content8 = new Uint8Array(fileContent);
-      console.log(content8);
 
       const wasmOut = global.GoEncrypt(this.state.encryptionPassword, content8);
       if (wasmOut.length !== 2) {
@@ -71,10 +68,9 @@ class Encrypt extends React.Component {
       }
 
       this.setState({
-        error: 'ooops'
-        // genKey: btoa(wasmOut[0]),
-        // cipherContentB64: btoa(wasmOut[1]),
-        // cipherContentRAW: wasmOut[1],
+        genKey: wasmOut[0],
+        cipherContent: wasmOut[1],
+        showResult: true,
       });
     }
     reader.onload = reader.onload.bind(this);
@@ -94,7 +90,7 @@ class Encrypt extends React.Component {
 
   render () {
     return this.props.show ? (
-      <div>
+      <div id="encryption-section">
         <section className="container" id="encryption-input">
           <div className="file-input">
             <input
@@ -150,6 +146,46 @@ class Encrypt extends React.Component {
           </div>
           <p style={{display: this.state.error !== "" ? 'block' : 'none'}} className='error-message'>
             <span>Error</span>: {this.state.error}
+          </p>
+        </section>
+
+        <section className="container" id="encryption-keys">
+          <p className="subsection-title">Keys <i className="fas fa-copy"></i></p>
+          <p className="small" style={{display: !this.state.showResult ? 'none' : ''}}>
+            Derived master key:
+            <span>{ this.state.genKey }</span>
+          </p>
+          <div className="keys">
+            <p className="encoded" style={{display: this.state.showResult ? 'none' : ''}} >
+              Waiting for input...
+            </p>
+            <ol style={{display: !this.state.showResult ? 'none' : ''}} id="gen-keys-result">
+            </ol>
+          </div>
+        </section>
+      
+        <section className="container" id="encrypted-file">
+          <p className="subsection-title">Encrypted file <i className="fas fa-copy"></i></p>
+          <p style={{display: !this.state.showResult ? 'none' : ''}}>
+            <a href="data:application/octet-stream,charset=utf-16le;base64,hola">
+              Save file <i className="fas fa-file-download"></i>
+            </a>
+          </p>
+          <p className="small">
+            Base64 encoded:
+          </p>
+          <p className="encoded" style={{display: this.state.showResult ? 'none' : ''}} >
+              Waiting for input...
+          </p>
+          <p className="encoded" style={{display: !this.state.showResult ? 'none' : ''}}>
+            <p style={{display: this.state.cipherContent.length >= 500 && this.state.showAllCipher ? 'block': 'none'}}>
+              <button onClick={() => { this.setState({showAllCipher: false})}} >... hide</button>
+            </p>
+            { this.state.showAllCipher ? this.state.cipherContent : this.state.cipherContent.substr(0, 500) }
+            <p style={{display: this.state.cipherContent.length >= 500 && !this.state.showAllCipher ? 'block': 'none'}}>
+              { this.state.cipherContent.substr(0, 500) }
+              <button onClick={() => { this.setState({showAllCipher: true})}} >... show all</button>
+            </p>
           </p>
         </section>
       </div>
