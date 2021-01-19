@@ -16,7 +16,7 @@ class Decrypt extends React.Component {
       error: "",
       showResult: false,
       showAllDecrypted: false,
-      plainContent: "",
+      plainContent: new Blob(),
       derivedKey: "",
       decryptedFileName: "",
     };
@@ -101,6 +101,21 @@ class Decrypt extends React.Component {
       this.setState({
         error: key,
       });
+      return
+    }
+
+    const content = global.GoDecrypt(key, this.state.encryptedB64Content);
+    if (typeof(key) === 'string' && key.startsWith('ERROR')) {
+      this.setState({
+        error: key,
+      });
+      return
+    }
+
+    const byteContent = atob(content);
+    const contentData = new Uint8Array(byteContent.length);
+    for (var i = 0; i < byteContent.length; i++) {
+      contentData[i] = byteContent.charCodeAt(i);
     }
 
     if (this.state.encryptedFileName.endsWith(".aes")) {
@@ -117,6 +132,7 @@ class Decrypt extends React.Component {
       error: "",
       derivedKey: key,
       showResult: true,
+      plainContent: new Blob(contentData),
     })
   }
 
@@ -184,22 +200,6 @@ class Decrypt extends React.Component {
               Save file <i className="fas fa-file-download"></i>
             </a>
           </p>
-          <p className="small">
-            Base64 encoded:
-          </p>
-          <p className="encoded" style={{display: this.state.showResult ? 'none' : ''}} >
-              Waiting for input...
-          </p>
-          <div className="encoded" style={{display: !this.state.showResult ? 'none' : ''}}>
-            <p style={{display: this.state.plainContent.length >= 500 && this.state.showAllDecrypted ? 'block': 'none'}}>
-              <button onClick={() => { this.setState({showAllDecrypted: false})}} >... hide</button>
-            </p>
-            { this.state.showAllDecrypted ? this.state.plainContent : this.state.plainContent.substr(0, 500) }
-            <p style={{display: this.state.plainContent.length >= 500 && !this.state.showAllDecrypted ? 'block': 'none'}}>
-              { this.state.plainContent.substr(0, 500) }
-              <button onClick={() => { this.setState({showAllDecrypted: true})}} >... show all</button>
-            </p>
-          </div>
         </section>
       </div>
     ): null;

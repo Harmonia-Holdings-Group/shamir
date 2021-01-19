@@ -22,6 +22,7 @@ func loadJSFuncs() {
 		"GoEncrypt":             encrypt,
 		"GoGenKeys":             genKeys,
 		"GoGetKeyFromKeyShares": getKeyFromKeyShares,
+		"GoDecrypt":             decrypt,
 	}
 	for k, v := range fns {
 		js.Global().Set(k, js.FuncOf(v))
@@ -38,6 +39,7 @@ func encrypt(_ js.Value, args []js.Value) interface{} {
 	for i := 0; i < args[1].Length(); i++ {
 		fileContent[i] = byte(args[1].Index(i).Int())
 	}
+	fmt.Printf("Go: [Content to encrypt] %v\n", fileContent)
 	key, encrypted, err := crypto.Encrypt(gotKey, fileContent)
 	if err != nil {
 		return handleError(err)
@@ -101,6 +103,26 @@ func getKeyFromKeyShares(_ js.Value, args []js.Value) interface{} {
 		return handleError(fmt.Errorf("failed obtaining master key; %v", err))
 	}
 	return base64.StdEncoding.EncodeToString(key[:])
+}
+
+func decrypt(_ js.Value, args []js.Value) interface{} {
+	if len(args) != 2 {
+		return handleError(fmt.Errorf("got %d, want 2", len(args)))
+	}
+	key, err := base64.StdEncoding.DecodeString(args[0].String())
+	if err != nil {
+		return handleError(fmt.Errorf("failed decoding key; %v", err))
+	}
+	cipherText, err := base64.StdEncoding.DecodeString(args[1].String())
+	if err != nil {
+		return handleError(fmt.Errorf("failed decoding file; %v", err))
+	}
+	content, err := crypto.Decrypt(key, cipherText)
+	if err != nil {
+		return handleError(fmt.Errorf("failed decrypting file; %v", err))
+	}
+	fmt.Printf("Go: [Decrypted content] %v\n", content)
+	return base64.StdEncoding.EncodeToString(content)
 }
 
 func handleError(err error) string {

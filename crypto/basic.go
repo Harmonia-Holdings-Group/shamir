@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"fmt"
 	"io"
 )
 
@@ -31,4 +32,21 @@ func Encrypt(key string, content []byte) ([]byte, []byte, error) {
 
 	cipherContent := aesGCM.Seal(nonce, nonce, content, nil)
 	return k, cipherContent, nil
+}
+
+func Decrypt(key, content []byte) ([]byte, error) {
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	aesGCM, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := aesGCM.NonceSize()
+	if len(content) < nonceSize {
+		return nil, fmt.Errorf("payload is too small!, missing nonce of size %d", nonceSize)
+	}
+	nonce, cipherMsg := content[:nonceSize], content[nonceSize:]
+	return aesGCM.Open(nil, nonce, cipherMsg, nil)
 }
