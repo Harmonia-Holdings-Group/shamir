@@ -47,7 +47,7 @@
         <h4><i>Shamir Secret Sharing Scheme:</i></h4>
   
         <p>
-          Let \(n\) be the number of <b>key shares</b>, and \(n\) the <b>key threshold</b>, i.e: the minimum number of keys 
+          Let \(n\) be the number of <b>key shares</b>, and \(k\) the <b>key threshold</b>, i.e: the minimum number of keys 
           required to obtain the derived key. To generate \(n\) keys, \(k-1\) positive integers are chosen at random such
           that every chosen integer is less that a positive prime value \(P\) and then a polynomial \(f(x)\) is built:
         </p>
@@ -81,7 +81,6 @@
       WebAssembly.instantiateStreaming(fetch("wasm/main.wasm"), go.importObject).
         then((result) => {
           go.run(result.instance);
-          console.log("Go!");
         }).catch((error) => {
         console.log("CATCH");
           console.log(error)

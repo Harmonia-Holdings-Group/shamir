@@ -113,6 +113,10 @@
     overflow-wrap: break-word !important;
     word-wrap: break-word !important;
     word-break: break-word !important;
+
+    span {
+      display: block;
+    }
   }
 
   padding-bottom: 3rem;
@@ -130,6 +134,21 @@
       overflow-wrap: break-word;
       word-wrap: break-word;
       word-break: break-word;
+    }
+  }
+
+  p a {
+    background: #252525;
+    color: white;
+    padding: .4rem 1.3rem;
+    border-radius: 2px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: .8rem;
+
+    i {
+      margin-left: .3rem;
     }
   }
 }

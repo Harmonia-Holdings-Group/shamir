@@ -52,7 +52,7 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 
 	k := args[0].Int()
 	n := args[1].Int()
-	fmt.Printf("k: %s, n:%s\n", k, n)
+	fmt.Printf("genKeys(k: %d, n:%d)\n", k, n)
 
 	keys := make([]interface{}, n)
 	for i := 0; i < n; i++ {
@@ -60,7 +60,7 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 		if _, err := rand.Read(randomData); err != nil {
 			return handleError(fmt.Errorf("unexpected err; %v", err))
 		}
-		keys[i] = base64.StdEncoding.EncodeToString(randomData)
+		keys[i] = fmt.Sprintf("%d-%s", i+1, base64.StdEncoding.EncodeToString(randomData))
 	}
 
 	return keys

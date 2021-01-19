@@ -12,11 +12,13 @@ class Encrypt extends React.Component {
       keyThreshold: 2,
       encryptionPassword: "",
       error: "",
-      fileInputMessage: "Select file to encrypt",
+      fileName: "Select file to encrypt",
       genKey: "",
       showResult: false,
       cipherContent: "",
       showAllCipher: false,
+      generatedKeys: [],
+      generatedKeysConcat: new Blob(),
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -40,11 +42,11 @@ class Encrypt extends React.Component {
       this.setState({error: "you must select exactly 1 file to encrypt!"});
       return;
     }
-    if (this.state.keyShares < 3) {
+    if (parseInt(this.state.keyShares) < 3) {
       this.setState({error: "key shares value must be at least 3"});
       return;
     }
-    if (this.state.keyThreshold < 2 || this.state.keyThreshold > this.state.keyShares) {
+    if (parseInt(this.state.keyThreshold) < 2 || parseInt(this.state.keyThreshold) > parseInt(this.state.keyShares)) {
       this.setState({error: "keys threshold value must be between 2 and the number of key shares."});
       return;
     }
@@ -75,6 +77,12 @@ class Encrypt extends React.Component {
     }
     reader.onload = reader.onload.bind(this);
     reader.readAsArrayBuffer(this.fileInput.current.files[0]);
+
+    const keys = global.GoGenKeys(parseInt(this.state.keyThreshold), parseInt(this.state.keyShares));
+    this.setState({
+      generatedKeys: keys,
+      generatedKeysConcat: new Blob([keys.join('\n')], {type: "text/plain"})
+    });
   }
 
   handleFileSelection(event) {
@@ -84,7 +92,7 @@ class Encrypt extends React.Component {
     }
     const fileName = this.fileInput.current.files[0].name;
     this.setState({
-      fileInputMessage: fileName
+      fileName: fileName
     })
   }
 
@@ -98,7 +106,7 @@ class Encrypt extends React.Component {
               ref={this.fileInput}
               onChange={this.handleFileSelection}
             />
-            <label htmlFor="file-input"><i className="fas fa-file"></i><span>{this.state.fileInputMessage}</span></label>
+            <label htmlFor="file-input"><i className="fas fa-file"></i><span>{this.state.fileName}</span></label>
           </div>
           <div className="input-group">
             <p className="accent">Key shares</p>
@@ -155,19 +163,33 @@ class Encrypt extends React.Component {
             Derived master key:
             <span>{ this.state.genKey }</span>
           </p>
+          <p style={{display: !this.state.showResult ? 'none' : ''}}>
+            <a
+              href={window.URL.createObjectURL(this.state.generatedKeysConcat)}
+              download='keys.txt'
+            >
+              Save file <i className="fas fa-file-download"></i>
+            </a>
+          </p>
           <div className="keys">
             <p className="encoded" style={{display: this.state.showResult ? 'none' : ''}} >
               Waiting for input...
             </p>
-            <ol style={{display: !this.state.showResult ? 'none' : ''}} id="gen-keys-result">
-            </ol>
+            <p className="encoded" style={{display: !this.state.showResult ? 'none' : ''}}>
+              {this.state.generatedKeys.map((k) => 
+                <span key={k}>{k}</span>
+              )}
+            </p>
           </div>
         </section>
       
         <section className="container" id="encrypted-file">
           <p className="subsection-title">Encrypted file <i className="fas fa-copy"></i></p>
           <p style={{display: !this.state.showResult ? 'none' : ''}}>
-            <a href="data:application/octet-stream,charset=utf-16le;base64,hola">
+            <a
+              href={`data:application/octet-stream,${this.state.cipherContent}`}
+              download={`${this.state.fileName}.aes`}
+            >
               Save file <i className="fas fa-file-download"></i>
             </a>
           </p>
@@ -177,7 +199,7 @@ class Encrypt extends React.Component {
           <p className="encoded" style={{display: this.state.showResult ? 'none' : ''}} >
               Waiting for input...
           </p>
-          <p className="encoded" style={{display: !this.state.showResult ? 'none' : ''}}>
+          <div className="encoded" style={{display: !this.state.showResult ? 'none' : ''}}>
             <p style={{display: this.state.cipherContent.length >= 500 && this.state.showAllCipher ? 'block': 'none'}}>
               <button onClick={() => { this.setState({showAllCipher: false})}} >... hide</button>
             </p>
@@ -186,7 +208,7 @@ class Encrypt extends React.Component {
               { this.state.cipherContent.substr(0, 500) }
               <button onClick={() => { this.setState({showAllCipher: true})}} >... show all</button>
             </p>
-          </p>
+          </div>
         </section>
       </div>
     ): null;
