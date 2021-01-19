@@ -1,6 +1,6 @@
 import { bindExpression, blockStatement } from '@babel/types';
 import { timingSafeEqual } from 'crypto';
-import React from 'react';
+import React, { useState } from 'react';
 
 // Styles
 import './styles.scss';
@@ -18,11 +18,12 @@ class Encrypt extends React.Component {
       genKey: "",
       cipherContentB64: "",
       cipherContentRAW: Uint8Array,
+      reader: new FileReader(),
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleEncryptRequest = this.handleEncryptRequest.bind(this);
-    this.handleFileSelection = this.handleFileSelection.bind(this)
+    this.handleFileSelection = this.handleFileSelection.bind(this);
 
     this.fileInput = React.createRef();
   }
@@ -56,24 +57,27 @@ class Encrypt extends React.Component {
     this.setState({
       error: ""
     })
-    
+
     const reader = new FileReader();
     reader.onload = function(e) {
       const fileContent = e.target.result;
       const content8 = new Uint8Array(fileContent);
-      const wasmOut = global.GoEncrypt(this.state.encryptionPassword, content8)
+      console.log(content8);
+
+      const wasmOut = global.GoEncrypt(this.state.encryptionPassword, content8);
       if (wasmOut.length !== 2) {
         this.setState({error: `(unexpected) ${wasmOut}`});
         return;
       }
 
       this.setState({
-        genKey: btoa(wasmOut[0]),
-        cipherContentB64: btoa(wasmOut[1]),
-        cipherContentRAW: wasmOut[1],
+        error: 'ooops'
+        // genKey: btoa(wasmOut[0]),
+        // cipherContentB64: btoa(wasmOut[1]),
+        // cipherContentRAW: wasmOut[1],
       });
     }
-    reader.onload.bind(this);
+    reader.onload = reader.onload.bind(this);
     reader.readAsArrayBuffer(this.fileInput.current.files[0]);
   }
 
@@ -148,8 +152,6 @@ class Encrypt extends React.Component {
             <span>Error</span>: {this.state.error}
           </p>
         </section>
-
-
       </div>
     ): null;
   }

@@ -80,7 +80,9 @@
       const go = new Go();
       WebAssembly.instantiateStreaming(fetch("wasm/main.wasm"), go.importObject).
         then((result) => {
+          console.log("Go, running!");
           go.run(result.instance);
+          console.log("Go, finished!");
         }).catch((error) => {
         console.log("CATCH");
           console.log(error)
