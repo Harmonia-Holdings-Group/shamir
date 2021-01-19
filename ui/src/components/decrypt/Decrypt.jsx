@@ -16,7 +16,7 @@ class Decrypt extends React.Component {
       error: "",
       showResult: false,
       showAllDecrypted: false,
-      plainContent: new Blob(),
+      plainContentURL: "",
       derivedKey: "",
       decryptedFileName: "",
     };
@@ -128,11 +128,15 @@ class Decrypt extends React.Component {
       })
     }
 
+    var blob, blobURL;
+    blob = new Blob([contentData])
+    blobURL = window.URL.createObjectURL(blob);
+
     this.setState({
       error: "",
       derivedKey: key,
       showResult: true,
-      plainContent: new Blob(contentData),
+      plainContentURL: blobURL,
     })
   }
 
@@ -194,7 +198,7 @@ class Decrypt extends React.Component {
           </p>
           <p style={{display: !this.state.showResult ? 'none' : ''}}>
             <a
-              href={`data:application/octet-stream,${this.state.plainContent}`}
+              href={this.state.plainContentURL}
               download={this.state.decryptedFileName}
             >
               Save file <i className="fas fa-file-download"></i>
