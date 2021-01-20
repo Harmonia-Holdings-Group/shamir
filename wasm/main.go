@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"strconv"
@@ -51,21 +50,32 @@ func encrypt(_ js.Value, args []js.Value) interface{} {
 }
 
 func genKeys(_ js.Value, args []js.Value) interface{} {
-	if len(args) != 2 {
-		return handleError(fmt.Errorf("got %d args, want 2", len(args)))
+	if len(args) != 3 {
+		return handleError(fmt.Errorf("got %d args, want 3", len(args)))
+	}
+	fmt.Println(args[0])
+	fmt.Println(args[1])
+	fmt.Println(args[2])
+	var secretBytes [32]byte
+	secret, err := base64.StdEncoding.DecodeString(args[0].String())
+	if err != nil {
+		return handleError(err)
 	}
 
-	k := args[0].Int()
-	n := args[1].Int()
+	copy(secretBytes[:], secret)
+	k := args[1].Int()
+	n := args[2].Int()
 	fmt.Printf("genKeys(k: %d, n:%d)\n", k, n)
 
-	keys := make([]interface{}, n)
-	for i := 0; i < n; i++ {
-		randomData := make([]byte, 256/8)
-		if _, err := rand.Read(randomData); err != nil {
-			return handleError(fmt.Errorf("unexpected err; %v", err))
-		}
-		keys[i] = fmt.Sprintf("%d-%s", i+1, base64.StdEncoding.EncodeToString(randomData))
+	keysBytes, err := crypto.GenKeyShares(secretBytes, k, n)
+	if err != nil {
+		return handleError(err)
+	}
+
+	keys := make([]interface{}, len(keysBytes))
+	for i, k := range keysBytes {
+		encodedString := base64.StdEncoding.EncodeToString(k[:])
+		keys[i] = fmt.Sprintf("%d-%s", i+1, encodedString)
 	}
 
 	return keys
