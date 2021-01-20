@@ -113,7 +113,6 @@ class Decrypt extends React.Component {
       });
       return
     }
-    console.log(content);
 
     const byteContent = atob(content);
     const contentData = new Uint8Array(byteContent.length);
