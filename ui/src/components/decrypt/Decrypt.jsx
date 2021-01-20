@@ -12,7 +12,7 @@ class Decrypt extends React.Component {
       encryptedFileName: "Select encrypted file",
       keys: [],
       showParsedKeys: false,
-      encryptedB64Content: "",
+      encryptedContent: new Blob(),
       error: "",
       showResult: false,
       showAllDecrypted: false,
@@ -68,8 +68,10 @@ class Decrypt extends React.Component {
 
     const reader = new FileReader();
     reader.onload = function(e) {
+      const fileContent = e.target.result;
+      const content8 = new Uint8Array(fileContent);
       this.setState({
-        encryptedB64Content: e.target.result,
+        encryptedContent: content8,
       })
     }
     reader.onerror = function(e) {
@@ -79,7 +81,7 @@ class Decrypt extends React.Component {
     }
     reader.onload = reader.onload.bind(this);
     reader.onerror = reader.onerror.bind(this);
-    reader.readAsText(this.encryptedFileInput.current.files[0], "UTF-8")
+    reader.readAsArrayBuffer(this.encryptedFileInput.current.files[0], "UTF-8")
   }
 
   handleDecryptRequest(e) {
@@ -89,7 +91,7 @@ class Decrypt extends React.Component {
       })
       return
     }
-    if (this.state.encryptedB64Content === "") {
+    if (this.state.encryptedContent.length === 0) {
       this.setState({
         error: "please select an encrypted file"
       })
@@ -104,13 +106,14 @@ class Decrypt extends React.Component {
       return
     }
 
-    const content = global.GoDecrypt(key, this.state.encryptedB64Content);
-    if (typeof(key) === 'string' && key.startsWith('ERROR')) {
+    const content = global.GoDecrypt(key, this.state.encryptedContent);
+    if (typeof(content) === 'string' && content.startsWith('ERROR')) {
       this.setState({
-        error: key,
+        error: content,
       });
       return
     }
+    console.log(content);
 
     const byteContent = atob(content);
     const contentData = new Uint8Array(byteContent.length);

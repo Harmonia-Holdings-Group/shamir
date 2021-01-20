@@ -113,11 +113,14 @@ func decrypt(_ js.Value, args []js.Value) interface{} {
 	if err != nil {
 		return handleError(fmt.Errorf("failed decoding key; %v", err))
 	}
-	cipherText, err := base64.StdEncoding.DecodeString(args[1].String())
-	if err != nil {
-		return handleError(fmt.Errorf("failed decoding file; %v", err))
+
+	fileContent := make([]byte, args[1].Length())
+	for i := 0; i < args[1].Length(); i++ {
+		fileContent[i] = byte(args[1].Index(i).Int())
 	}
-	content, err := crypto.Decrypt(key, cipherText)
+	fmt.Printf("Go [Content to decrypt] %v\n", fileContent)
+
+	content, err := crypto.Decrypt(key, fileContent)
 	if err != nil {
 		return handleError(fmt.Errorf("failed decrypting file; %v", err))
 	}
