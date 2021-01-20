@@ -10,28 +10,23 @@ class Decrypt extends React.Component {
     this.state = {
       keysFileName: "Select keys file",
       encryptedFileName: "Select encrypted file",
-      keysTextValue: "",
-      encryptedB64Content: "",
+      keys: [],
+      showParsedKeys: false,
+      encryptedContent: new Blob(),
       error: "",
-      showKeysTextArea: false,
-      showEncFileTextArea: false,
+      showResult: false,
+      showAllDecrypted: false,
+      plainContentURL: "",
+      derivedKey: "",
+      decryptedFileName: "",
     };
 
-    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleDecryptRequest = this.handleDecryptRequest.bind(this);
 
     this.handleKeysFileSelection = this.handleKeysFileSelection.bind(this);
     this.handleEncryptedFileSelection = this.handleEncryptedFileSelection.bind(this);
     this.keysFileInput = React.createRef();
     this.encryptedFileInput = React.createRef();
-  }
-
-  handleInputChange(event) {
-    const target = event.target;
-    const value = target.value;
-    const name = target.name;
-    this.setState({
-      [name]: value,
-    });
   }
 
   handleKeysFileSelection(e) {
@@ -44,30 +39,100 @@ class Decrypt extends React.Component {
       keysFileName: fileName
     })
 
-    var reader = new FileReader();
-    reader.onload = function(e) {
+    const keysReader = new FileReader();
+    keysReader.onload = function(e) {
       this.setState({
-        keysTextValue: e.target.result,
+        keys: e.target.result.split('\n').filter((k) => k.length > 0),
+        showParsedKeys: true,
       })
     }
-    reader.onerror = function(e) {
+    keysReader.onerror = function(e) {
       this.setState({
         error: "Failed reading keys file </3",
       })
     }
-    reader.onload = reader.onload.bind(this);
-    reader.onerror = reader.onerror.bind(this);
-    reader.readAsText(this.keysFileInput.current.files[0], "UTF-8")
+    keysReader.onload = keysReader.onload.bind(this);
+    keysReader.onerror = keysReader.onerror.bind(this);
+    keysReader.readAsText(this.keysFileInput.current.files[0], "UTF-8")
   }
-
-  handleEncryptedFileSelection(e) {
-    if (this.encryptedFileInput.current.files.length !== 1) {
-      this.setState({error: "you must select exactly 1 file to encrypt!"});
-      return;
     }
     const fileName = this.encryptedFileInput.current.files[0].name;
     this.setState({
-      encryptedFileName: fileName
+    })
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const fileContent = e.target.result;
+      const content8 = new Uint8Array(fileContent);
+      this.setState({
+        encryptedContent: content8,
+      })
+    }
+    reader.onerror = function(e) {
+      this.setState({
+        error: "Failed reading encrypted file </3",
+      })
+    }
+    reader.onload = reader.onload.bind(this);
+    reader.onerror = reader.onerror.bind(this);
+    reader.readAsArrayBuffer(this.encryptedFileInput.current.files[0], "UTF-8")
+  }
+
+  handleDecryptRequest(e) {
+    if (this.state.keys.length < 2) {
+      this.setState({
+        error: "obtained less than 2 keys from keys input",
+      })
+      return
+    }
+    if (this.state.encryptedContent.length === 0) {
+      this.setState({
+        error: "please select an encrypted file"
+      })
+      return
+    }
+
+    const key = global.GoGetKeyFromKeyShares(this.state.keys);
+    if (typeof(key) === 'string' && key.startsWith('ERROR')) {
+      this.setState({
+        error: key,
+      });
+      return
+    }
+
+    const content = global.GoDecrypt(key, this.state.encryptedContent);
+    if (typeof(content) === 'string' && content.startsWith('ERROR')) {
+      this.setState({
+        error: content,
+      });
+      return
+    }
+
+    const byteContent = atob(content);
+    const contentData = new Uint8Array(byteContent.length);
+    for (var i = 0; i < byteContent.length; i++) {
+      contentData[i] = byteContent.charCodeAt(i);
+    }
+
+    if (this.state.encryptedFileName.endsWith(".aes")) {
+      this.setState({
+        decryptedFileName: this.state.encryptedFileName.substr(0, this.state.encryptedFileName.length-4)
+      })
+    } else {
+      this.setState({
+        decryptedFileName: this.state.encryptedFileName,
+      })
+    }
+
+    var blob, blobURL;
+    blob = new Blob([contentData])
+    blobURL = window.URL.createObjectURL(blob);
+
+    this.setState({
+      error: "",
+      derivedKey: key,
+      showResult: true,
+      plainContentURL: blobURL,
     })
   }
 
@@ -91,21 +156,11 @@ class Decrypt extends React.Component {
                 <span>{ this.state.keysFileName} </span>
               </label>
             </div>
-            <label>
-              <b>OR</b> Paste the keys 
-              <button
-                onClick={(e) => {this.setState({showKeysTextArea: !this.state.showKeysTextArea})}}
-              >
-                here
-              </button>.
-            </label>
-            <textarea
-              style={{display: this.state.showKeysTextArea ? 'block' : 'none'}}
-              name="keysTextValue"
-              id=""
-              value={this.state.keysTextValue}
-              onChange={this.handleInputChange}
-            />
+            <p className="encoded" style={{display: !this.state.showParsedKeys ? 'none' : ''}}>
+              {this.state.keys.map((k) => 
+                <span key={k}>{k}</span>
+              )}
+            </p>
           </div>
           <div className="input-group">
             <p className="accent">Encrypted file</p>
@@ -114,34 +169,38 @@ class Decrypt extends React.Component {
             </label>
             <div className="file-input">
               <input
-                type="file" id="file-input"
+                type="file" id="efile-input"
                 ref={this.encryptedFileInput}
                 onChange={this.handleEncryptedFileSelection}
               />
-              <label htmlFor="file-input">
+              <label htmlFor="efile-input">
                 <i className="fas fa-file"></i>
                 <span>{ this.state.encryptedFileName} </span>
               </label>
             </div>
-            <label>
-              <b>OR</b> Paste the encrypted base 64 encoded content 
-              <button
-                onClick={(e) => {this.setState({showEncFileTextArea: !this.state.showEncFileTextArea})}}
-              >
-                here
-              </button>.
-            </label>
-            <textarea
-              style={{display: this.state.showEncFileTextArea ? 'block' : 'none'}}
-              name="encryptedB64Content"
-              value={this.state.keysTextValue}
-              onChange={this.handleInputChange}
-            />
+          </div>
+          <div className="button">
+            <button onClick={this.handleDecryptRequest}>Decrypt <i className="fas fa-play"></i></button>
           </div>
           <p style={{display: this.state.error !== "" ? 'block' : 'none'}} className='error-message'>
             <span>Error</span>: {this.state.error}
           </p>
         </div>
+        <section className="container" id="encrypted-file">
+          <p className="subsection-title">Decrypted file <i className="fas fa-copy"></i></p>
+          <p className="small" style={{display: !this.state.showResult ? 'none' : ''}}>
+            Derived master key:
+            <span>{ this.state.derivedKey }</span>
+          </p>
+          <p style={{display: !this.state.showResult ? 'none' : ''}}>
+            <a
+              href={this.state.plainContentURL}
+              download={this.state.decryptedFileName}
+            >
+              Save file <i className="fas fa-file-download"></i>
+            </a>
+          </p>
+        </section>
       </div>
     ): null;
   }

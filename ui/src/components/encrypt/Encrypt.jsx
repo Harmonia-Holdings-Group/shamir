@@ -16,6 +16,10 @@ class Encrypt extends React.Component {
       genKey: "",
       showResult: false,
       cipherContent: "",
+<<<<<<< HEAD
+=======
+      cipherBlob: new Blob(),
+>>>>>>> 64f36ad4d68a3c782783502913dc9addf968a251
       showAllCipher: false,
       generatedKeys: [],
       generatedKeysConcat: new Blob(),
@@ -69,10 +73,19 @@ class Encrypt extends React.Component {
         return;
       }
 
+      const encodedEncrypted = atob(wasmOut[1]);
+      const encryptedBytes = new Uint8Array(encodedEncrypted.length);
+      for (var i = 0; i < encodedEncrypted.length; i++) {
+        encryptedBytes[i] = encodedEncrypted.charCodeAt(i);
+      }
+      console.log(`ENCRYPTED BYTES: ${encryptedBytes}`)
+      const blob = new Blob([encryptedBytes])
+
       this.setState({
         genKey: wasmOut[0],
         cipherContent: wasmOut[1],
         showResult: true,
+        cipherBlob: blob,
       });
     }
     reader.onload = reader.onload.bind(this);
@@ -187,7 +200,7 @@ class Encrypt extends React.Component {
           <p className="subsection-title">Encrypted file <i className="fas fa-copy"></i></p>
           <p style={{display: !this.state.showResult ? 'none' : ''}}>
             <a
-              href={`data:application/octet-stream,${this.state.cipherContent}`}
+              href={window.URL.createObjectURL(this.state.cipherBlob)}
               download={`${this.state.fileName}.aes`}
             >
               Save file <i className="fas fa-file-download"></i>

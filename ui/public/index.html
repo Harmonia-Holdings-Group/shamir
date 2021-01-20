@@ -59,6 +59,22 @@
           Finally, to obtain \(n\) keys, \(n\) points are evaluated at \(i = 1, ..., n\)
           to retrieve \((i, f(i))\) secrets.
         </p>
+
+        <h3>The code</h3>
+
+        <p>
+          This website runs all cryptographic algorithms on your browser using WebAssembly and a binary
+          compiled from Go. Cryptographic primitives are provided by
+          <a href="https://pkg.go.dev/crypto/aes">cryto/aes</a> and
+          <a href="https://pkg.go.dev/math/big">math/big</a>. 
+
+          No data is sent to any online services as all tasks run locally using either the JS Engine
+          (for UI rendering) or WebAssembly directly.
+
+          You might experience slow performance when encrypting large files as resource might be
+          limited by the browser.
+        </p>
+
       </div>
     </div>
   
@@ -66,12 +82,12 @@
       <div class="container">
         <div>
           <p class="footer-title">Authors</p>
-          <p><a href="">Pablo Trinidad</a></p>
-          <p><a href="">Diego Jardón</a></p>
+          <p><a href="https://github.com/pablotrinidad">Pablo Trinidad</a></p>
+          <p><a href="https://github.com/jardondiego">Diego Jardón</a></p>
         </div>
         <div>
           <p class="footer-title">Contribute</p>
-          <p><a href="">GitHub Repository</a></p>
+          <p><a href="https://github.com/pablotrinidad/shamir">GitHub Repository</a></p>
         </div>
       </div>
     </footer>
