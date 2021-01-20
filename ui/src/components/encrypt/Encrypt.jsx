@@ -16,10 +16,7 @@ class Encrypt extends React.Component {
       genKey: "",
       showResult: false,
       cipherContent: "",
-<<<<<<< HEAD
-=======
       cipherBlob: new Blob(),
->>>>>>> 64f36ad4d68a3c782783502913dc9addf968a251
       showAllCipher: false,
       generatedKeys: [],
       generatedKeysConcat: new Blob(),
@@ -80,22 +77,26 @@ class Encrypt extends React.Component {
       }
       console.log(`ENCRYPTED BYTES: ${encryptedBytes}`)
       const blob = new Blob([encryptedBytes])
+      debugger;
+      const keys = global.GoGenKeys(
+        wasmOut[0],
+        parseInt(this.state.keyThreshold),
+        parseInt(this.state.keyShares)
+      );
 
       this.setState({
+        generatedKeys: keys,
+        generatedKeysConcat: new Blob([keys.join("\n")], {
+          type: "text/plain",
+        }),
         genKey: wasmOut[0],
         cipherContent: wasmOut[1],
         showResult: true,
-        cipherBlob: blob,
+        cipherBlob: blob
       });
     }
     reader.onload = reader.onload.bind(this);
     reader.readAsArrayBuffer(this.fileInput.current.files[0]);
-
-    const keys = global.GoGenKeys(parseInt(this.state.keyThreshold), parseInt(this.state.keyShares));
-    this.setState({
-      generatedKeys: keys,
-      generatedKeysConcat: new Blob([keys.join('\n')], {type: "text/plain"})
-    });
   }
 
   handleFileSelection(event) {
