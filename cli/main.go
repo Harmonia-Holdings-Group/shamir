@@ -7,11 +7,8 @@ import (
 )
 
 func main() {
-	fmt.Println("Hola")
-	fmt.Println(crypto.P)
-
 	var key [32]byte
-	keyShares, err := crypto.GenKeyShares(key, 2, 3)
+	keyShares, err := crypto.GenKeyShares(key, 3, 5)
 
 	if err != nil {
 		panic(err)
