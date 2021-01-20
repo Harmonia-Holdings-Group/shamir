@@ -71,8 +71,6 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 	return keys
 }
 
-<<<<<<< HEAD
-=======
 func getKeyFromKeyShares(_ js.Value, args []js.Value) interface{} {
 	if len(args) != 1 {
 		return handleError(fmt.Errorf("got %d args, want 1", len(args)))
@@ -130,7 +128,6 @@ func decrypt(_ js.Value, args []js.Value) interface{} {
 	return base64.StdEncoding.EncodeToString(content)
 }
 
->>>>>>> 64f36ad4d68a3c782783502913dc9addf968a251
 func handleError(err error) string {
 	return fmt.Sprintf("ERROR: %s", err)
 }
