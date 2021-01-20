@@ -1,8 +1,6 @@
 package crypto
 
 import (
-	"fmt"
-	"math"
 	"math/big"
 )
 
@@ -11,7 +9,8 @@ import (
 // https://primes.utm.edu/curios/page.php?number_id=3746
 var P *big.Int
 
-func notinit() {
+func init() {
+	P = &big.Int{}
 	// pFactorization is the fundamental factorization of P:
 	// 312^2 + 312^3 + 312^5 + 312^7 + 312^11 + 312^13 + 312^17 + 312^19 + 312^23 + 312^29 + 312^31 + 1
 	pFactorization := [12][2]float64{
@@ -29,10 +28,10 @@ func notinit() {
 		{1, 1},
 	}
 	for _, f := range pFactorization {
-		sum := big.NewInt(int64(math.Pow(f[0], f[1])))
-		P.Add(P, sum)
+		currentFactor := big.NewInt(0)
+		base := big.NewInt(int64(f[0]))
+		exponent := big.NewInt(int64(f[1]))
+		currentFactor.Exp(base, exponent, nil)
+		P.Add(P, currentFactor)
 	}
-	var s fmt.State
-	P.Format(s, 'd')
-	fmt.Println(s)
 }
