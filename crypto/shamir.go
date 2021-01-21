@@ -73,11 +73,7 @@ func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
 		return [32]byte{}, fmt.Errorf("got %d, wants at least 2", len(points))
 	}
 
-	lagrangeBasis, err := getLagrangeBasis(points)
-	if err != nil {
-		return [32]byte{}, err
-	}
-
+	lagrangeBasis := getLagrangeBasis(points)
 	polynomialEvaluations := make([]*big.Int, len(points))
 	for i, p := range points {
 		bigInt := big.NewInt(0)
@@ -88,7 +84,7 @@ func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
 	return findPolynomialRoot(lagrangeBasis, polynomialEvaluations)
 }
 
-func getLagrangeBasis(points []Point) ([]*big.Int, error) {
+func getLagrangeBasis(points []Point) []*big.Int {
 	res := make([]*big.Int, len(points))
 	for i := range points {
 		pi0 := big.NewInt(0)
@@ -122,7 +118,7 @@ func getLagrangeBasis(points []Point) ([]*big.Int, error) {
 		res[i] = pi0
 	}
 
-	return res, nil
+	return res
 }
 
 func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]byte, error) {
