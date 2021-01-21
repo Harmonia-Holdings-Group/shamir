@@ -51,6 +51,23 @@ under the `wasm/` folder. If the `ui/public/wasm/main.wasm` file is not present,
 `GOROOT/misc/wasm/wasm_exec.js`. For more info about WebAssembly and Golang, visit
 [**this wiki**](https://github.com/golang/go/wiki/WebAssembly).
 
+API Index:
+
+```go
+func Decrypt(key, content []byte) ([]byte, error)
+func Encrypt(key string, content []byte) ([]byte, []byte, error)
+
+func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error)
+func GetKeyFromKeyShares(points []Point) ([32]byte, error)
+
+type Point struct {
+	X  int
+	Fx [32]byte
+}
+```
+
+[API Documentation.](https://pkg.go.dev/github.com/pablotrinidad/shamir/crypto)
+
 ### UI (ReactJS)
 
 A basic UI was created for interacting with the input fields and communicating with the WebAssembly
