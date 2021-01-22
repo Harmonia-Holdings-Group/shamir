@@ -11,7 +11,7 @@ import (
 )
 
 // Test_KeyGeneration tests GenKeyShares and GetKeyFromKeyShares methods.
-func Test_KeyGeneration(t *testing.T) {
+func ATest_KeyGeneration(t *testing.T) {
 	tests := []struct {
 		name                    string
 		inputKey                string // 256-bit base64 encoded key

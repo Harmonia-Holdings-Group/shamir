@@ -6,26 +6,6 @@ import (
 	"math/rand"
 )
 
-// evaluatePolynomial
-// TODO: add ref to horners method & add proper docstring
-func evaluatePolynomial(coefficients []*big.Int, K, x *big.Int) *big.Int {
-	evaluation := big.NewInt(0)
-	evaluation.Add(evaluation, coefficients[0])
-
-	for i := 1; i < len(coefficients); i++ {
-		evaluation.Mul(evaluation, x)
-		evaluation.Mod(evaluation, P)
-		evaluation.Add(evaluation, coefficients[i])
-		evaluation.Mod(evaluation, P)
-	}
-	evaluation.Mul(evaluation, x)
-	evaluation.Mod(evaluation, P)
-	evaluation.Add(evaluation, K)
-	evaluation.Mod(evaluation, P)
-
-	return evaluation
-}
-
 // GenKeyShares generates n key shares (xi, P(xi)) where xi is [1...n] and P(xi) is a 256-bit integer
 // t - 1 represents the degree of the polynomial P used to generate the n key shares
 // which makes only t of them necessary to calculate K key used to encrypt the content
@@ -63,6 +43,26 @@ func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error) {
 	return result, nil
 }
 
+// evaluatePolynomial
+// TODO: add ref to horners method & add proper docstring
+func evaluatePolynomial(coefficients []*big.Int, K, x *big.Int) *big.Int {
+	evaluation := big.NewInt(0)
+	evaluation.Add(evaluation, coefficients[0])
+
+	for i := 1; i < len(coefficients); i++ {
+		evaluation.Mul(evaluation, x)
+		evaluation.Mod(evaluation, P)
+		evaluation.Add(evaluation, coefficients[i])
+		evaluation.Mod(evaluation, P)
+	}
+	evaluation.Mul(evaluation, x)
+	evaluation.Mod(evaluation, P)
+	evaluation.Add(evaluation, K)
+	evaluation.Mod(evaluation, P)
+
+	return evaluation
+}
+
 type Point struct {
 	X  int
 	Fx [32]byte
@@ -79,6 +79,7 @@ func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
 		bigInt := big.NewInt(0)
 		bigInt.SetBytes(p.Fx[:])
 		polynomialEvaluations[i] = bigInt
+		fmt.Println(bigInt)
 	}
 
 	return findPolynomialRoot(lagrangeBasis, polynomialEvaluations)
@@ -93,8 +94,13 @@ func getLagrangeBasis(points []Point) []*big.Int {
 
 		// Calculate numerator
 		for j := range points {
-			currentFactor := big.NewInt(int64(-1 * points[j].X))
+			if i == j {
+				continue
+			}
+			currentFactor := big.NewInt(0)
+			currentFactor.Sub(P, big.NewInt(int64(points[j].X)))
 			numerator.Mul(numerator, currentFactor)
+			numerator.Mod(numerator, P)
 		}
 
 		// Calculate denominator
@@ -105,7 +111,9 @@ func getLagrangeBasis(points []Point) []*big.Int {
 			currentFactor := big.NewInt(0)
 			xi := big.NewInt(int64(points[i].X))
 			xj := big.NewInt(int64(points[j].X))
-			currentFactor.Sub(xi, xj)
+			inverseXj := big.NewInt(0)
+			inverseXj.Sub(P, xj)
+			currentFactor.Add(xi, inverseXj)
 			currentFactor.Mod(currentFactor, P)
 			denominator.Mul(denominator, currentFactor)
 			denominator.Mod(denominator, P)
@@ -127,7 +135,10 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 	}
 	res := big.NewInt(0)
 	for i := 0; i < len(polynomialEvaluations); i++ {
-		res.Mul(lagrangeBasis[i], polynomialEvaluations[i])
+		currentAddend := big.NewInt(0)
+		currentAddend.Mul(lagrangeBasis[i], polynomialEvaluations[i])
+		currentAddend.Mod(currentAddend, P)
+		res.Add(res, currentAddend)
 		res.Mod(res, P)
 	}
 	var resBytes [32]byte
