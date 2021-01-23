@@ -32,5 +32,5 @@ func main() {
 
 	fmt.Println()
 	fmt.Println(OMG)
-	fmt.Println(derivedKeyOMG)
+	fmt.Printf("%v\n",derivedKeyOMG)
 }
