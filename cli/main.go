@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/pablotrinidad/shamir/crypto"
 )
 
 func main() {
 	var key [32]byte
-	key[30] += 2
+	key[0] = 1
 	keyShares, err := crypto.GenKeyShares(key, 3, 5)
 	points := make([]crypto.Point, 0, len(keyShares))
+	fmt.Println("POINTS!!!!")
 	for i := 0; i < len(keyShares); i++ {
 		point := crypto.Point{X: i + 1, Fx: keyShares[i]}
 		points = append(points, point)
+		fmt.Printf("\t%v\n", keyShares[i])
 	}
 
 	if err != nil {
@@ -25,12 +26,7 @@ func main() {
 	if err != nil {
 		panic("")
 	}
-	OMG := big.NewInt(0)
-	OMG.SetBytes(key[:])
-	derivedKeyOMG := big.NewInt(0)
-	derivedKeyOMG.SetBytes(derivedKey[:])
 
-	fmt.Println()
-	fmt.Println(OMG)
-	fmt.Printf("%v\n",derivedKeyOMG)
+	fmt.Printf("ORIGINAL KEY: %v\n", key)
+	fmt.Printf("DERIVED KEY: %v\n", derivedKey)
 }

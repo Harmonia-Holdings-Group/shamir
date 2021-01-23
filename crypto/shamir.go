@@ -32,12 +32,21 @@ func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error) {
 	}
 
 	key := big.NewInt(0)
-	key.SetBytes(secret[:])
+	secretRep := make([]byte, 32)
+	for i := range secret {
+		secretRep[31-i] = secret[i]
+	}
+	key.SetBytes(secretRep)
 
 	result := make([][32]byte, n)
 	for i := 1; i <= n; i++ {
 		evaluation := evaluatePolynomial(coefficients, key, big.NewInt(int64(i)))
-		copy(result[i-1][:], evaluation.Bytes())
+		var y [32]byte
+		copy(y[:], evaluation.Bytes())
+		for j := 0; j < 32; j++ {
+			result[i-1][31-j] = y[j]
+		}
+		//copy(result[i-1][:], evaluation.Bytes())
 	}
 
 	return result, nil
@@ -73,16 +82,31 @@ func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
 		return [32]byte{}, fmt.Errorf("got %d, wants at least 2", len(points))
 	}
 
+	//fxs := make([]*big.Int, 32)
+	//for i := range points {
+	//	p := points[i]
+	//	fx := make([]byte, 32)
+	//	for i := range fx {
+	//		fx[31-i] = p.Fx[i]
+	//	}
+	//	fxInt := big.NewInt(0)
+	//	fxInt.SetBytes(fx)
+	//	fxs[i] = fxInt
+	//}
+
 	lagrangeBasis := getLagrangeBasis(points)
 	polynomialEvaluations := make([]*big.Int, len(points))
+	fmt.Println("VOLTEANDO EVALUATIONS!!!!")
 	for i := range points {
 		p := points[i]
 		bigInt := big.NewInt(0)
 		fx := make([]byte, 32)
-		for i := range fx {
-			fx[31-i] = p.Fx[i]
-		}
+		copy(fx[:], p.Fx[:])
+		//for i := range fx {
+		//	fx[31-i] = p.Fx[i]
+		//}
 		bigInt.SetBytes(fx[:])
+		fmt.Printf("\t%v\n", fx)
 		polynomialEvaluations[i] = bigInt
 	}
 
