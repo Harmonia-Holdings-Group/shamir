@@ -36,7 +36,7 @@ func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error) {
 	for i := range secret {
 		secretRep[31-i] = secret[i]
 	}
-	key.SetBytes(secretRep)
+	key.SetBytes(secret[:])
 
 	result := make([][32]byte, n)
 	for i := 1; i <= n; i++ {
@@ -179,9 +179,11 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 		res.Add(res, currentAddend)
 		res.Mod(res, P)
 	}
-	fmt.Println(res)
 	var resBytes [32]byte
-	copy(resBytes[:], res.Bytes())
+	rootBytes := res.Bytes()
+	for i := range rootBytes {
+		resBytes[31-i] = rootBytes[i]
+	}
 
 	return resBytes, nil
 }

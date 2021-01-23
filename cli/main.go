@@ -8,7 +8,7 @@ import (
 
 func main() {
 	var key [32]byte
-	key[0] = 1
+	key[13] = 1
 	keyShares, err := crypto.GenKeyShares(key, 3, 5)
 	points := make([]crypto.Point, 0, len(keyShares))
 	fmt.Println("POINTS!!!!")
