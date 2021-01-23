@@ -75,11 +75,15 @@ func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
 
 	lagrangeBasis := getLagrangeBasis(points)
 	polynomialEvaluations := make([]*big.Int, len(points))
-	for i, p := range points {
+	for i := range points {
+		p := points[i]
 		bigInt := big.NewInt(0)
-		bigInt.SetBytes(p.Fx[:])
+		fx := make([]byte, 32)
+		for i := range fx {
+			fx[31-i] = p.Fx[i]
+		}
+		bigInt.SetBytes(fx[:])
 		polynomialEvaluations[i] = bigInt
-		fmt.Println(bigInt)
 	}
 
 	return findPolynomialRoot(lagrangeBasis, polynomialEvaluations)
@@ -130,6 +134,16 @@ func getLagrangeBasis(points []Point) []*big.Int {
 }
 
 func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]byte, error) {
+	fmt.Printf("\tBASIS:\n")
+	for i := range lagrangeBasis {
+		fmt.Printf("\t\t%d\n", lagrangeBasis[i])
+	}
+
+	fmt.Printf("\tEVS:\n")
+	for i := range polynomialEvaluations {
+		fmt.Printf("\t\t%d\n", polynomialEvaluations[i])
+	}
+
 	if len(polynomialEvaluations) != len(lagrangeBasis) {
 		return [32]byte{}, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
 	}
@@ -141,6 +155,7 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 		res.Add(res, currentAddend)
 		res.Mod(res, P)
 	}
+	fmt.Println(res)
 	var resBytes [32]byte
 	copy(resBytes[:], res.Bytes())
 
