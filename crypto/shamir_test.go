@@ -149,60 +149,126 @@ import (
 //}
 
 func Test_EvaluatePoly(t *testing.T) {
-	co := []*big.Int{
-		big.NewInt(2),
-		big.NewInt(3),
-	}
+	wordSize := 1
+
+	fmt.Println("Generating key...")
 	var keyBytes [32]byte
-	if _, err := rand.Read(keyBytes[:]); err != nil {
+	if _, err := rand.Read(keyBytes[31:]); err != nil {
 		panic(err)
 	}
 	k := big.NewInt(0)
 	k.SetBytes(keyBytes[:])
-	n := 3
-	points := make([]Point, n)
+	k = k.Abs(k)
+	k = k.Mod(k, P)
+	fmt.Printf("Obtained:\t%v %v\n\n", k, k.Bytes())
 
-	// PASO 1
-	// 		GENERA PUNTOS
-	//		COPIA RAW BYTES into POINTS
-	fmt.Println("EVALUATIONS:")
-	for x := 1; x <= n; x++ {
-		r := evaluatePolynomial(co, k, big.NewInt(int64(x)))
-		fmt.Printf("f(%d) = %d\t (FROM POINTS: ", x, r)
-		var y [32]byte
-		copy(y[:], r.Bytes())
-		points[x-1] = Point{X:  x, Fx: y}
-		fmt.Printf("f(%d) = %d)\n", points[x-1].X, points[x-1].Fx)
+	polyDegree := 3
+	coefficients := make([]*big.Int, polyDegree)
+	fmt.Printf("Generating random poly:\n")
+	for i := range coefficients {
+		coBytes := make([]byte, 32)
+		if _, err := rand.Read(coBytes[32-wordSize:]); err != nil {
+			panic(err)
+		}
+		co := big.NewInt(0)
+		co.SetBytes(coBytes)
+		co = co.Abs(co)
+		fmt.Printf("\t%d:\t%v\n", co, co.Bytes())
+
+		if len(co.Bytes()) != wordSize {
+			t.Fatalf("INVALID CO GENERATION!!!!!!")
+		}
+		coefficients[i] = co
+	}
+	fmt.Printf("Obtained: ")
+	for i := range coefficients {
+		if i != len(coefficients) - 1 {
+			fmt.Printf("%dx^%d + ", coefficients[i], len(coefficients)-i)
+		} else {
+			fmt.Printf("%dx + %d\n", coefficients[i], k)
+		}
 	}
 
-	fmt.Println(" ------------------------------------ ")
+	evaluations := 4
+	points := make([]Point, evaluations)
+	fmt.Printf("\nObtaining %d evaluations:\n", evaluations)
+	for x := 1; x <= evaluations; x++ {
+		input := big.NewInt(int64(x))
+		y := evaluatePolynomial(coefficients, k, input)
+		fmt.Printf("\tf(%d): %d\n\t\t", input, y)
 
-	fmt.Println("BASIS:")
+		for i := range coefficients {
+			if i != len(coefficients) - 1 {
+				fmt.Printf("(%d)%d^%d + ", coefficients[i], input, len(coefficients)-i)
+			} else {
+				fmt.Printf("(%d)%d + %d\n", coefficients[i], input, k)
+			}
+		}
+
+		yBytes := y.Bytes()
+		var outBytes [32]byte
+		copy(outBytes[:], yBytes) // ⚠️⚠️⚠️⚠️ Byte array flipped order
+		fmt.Printf("\t\tmath/big bytes: %v\n", yBytes)
+		fmt.Printf("\t\t[32]byte: %v\n", outBytes)
+		yRecover := big.NewInt(0)
+		yRecover.SetBytes(outBytes[:])
+		//fmt.Printf("\t\tRecovered %d\n", yRecover)
+		points[x-1] = Point{
+			X:  x,
+			Fx: outBytes,
+		}
+	}
+
+	fmt.Println("\nObtaining Lagrange Basis:")
 	basis := getLagrangeBasis(points)
 	for _, b := range basis {
-		fmt.Println(b)
+		fmt.Printf("\t%v\n", b)
 	}
 
-	// PASO 3
-	// 		LAS EVALUACIONES SE CREAN USANDO LOS BYTES VOLTEADOS
-	//		SE MANDA A LLAMAD A findPolynomialRoot con esos puntos
-	fmt.Println("ROOT:")
+	fmt.Println("\n\nParsing point evaluations:")
 	evs := make([]*big.Int, len(points))
 	for i := range points {
-		fx := points[i].Fx
-		y := big.NewInt(0)
-		fx1 := make([]byte, 32)
-		for i := range fx {
-			fx1[31-i] = fx[i]
+		evBytes := points[i].Fx
+		fmt.Printf("\tReading %v", evBytes)
+		parsedResult := big.NewInt(0)
+		container := make([]byte, 32)
+		for j := range evBytes {
+			container[31-j] = evBytes[j]
 		}
-		y.SetBytes(fx1[:])
-		evs[i] = y
-		fmt.Printf("y_%d: %d\n\tUsing bytes %v\n\n", i+1, y, fx1[:])
+		fmt.Printf("\tWrote %v", container)
+		parsedResult.SetBytes(container[:])
+		fmt.Printf("\tInterpreted as: %v\n", parsedResult)
+		fmt.Printf("\t\tmath/big bytes %v\n", parsedResult.Bytes())
+		evs[i] = parsedResult
 	}
-	r, _ := findPolynomialRoot(basis, evs)
 
-	fmt.Printf("ORIGINAL KEY: %v\n", k.Bytes())
-	fmt.Printf("GOT KEY: %v\n", r)
+	fmt.Println("\n\nObtaining root:")
+	root, err := findPolynomialRoot(basis, evs)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("\t(bytes) %v", root)
+	//fmt.Println("\tPrinting evaluations:")
+	//evs := make([]*big.Int, len(points))
+	//for i := range points {
+	//	fx := points[i].Fx
+	//	y := big.NewInt(0)
+	//	fx1 := make([]byte, 32)
+	//	for i := range fx {
+	//		fx1[31-i] = fx[i]
+	//	}
+	//	y.SetBytes(fx1[:])
+	//	evs[i] = y
+	//	fmt.Printf("\t\ty_%d: %d\n\t\t\t%v\n\n", i+1, y, fx1[:])
+	//}
+	//
+	//fmt.Println(" ------------------------------------ ")
+	//fmt.Println("\tFINDING POLY")
+	//r, _ := findPolynomialRoot(basis, evs)
+	//
+	//fmt.Println(" ------------------------------------ ")
+	//fmt.Printf("ORIGINAL KEY: %v\n", k.Bytes())
+	//fmt.Printf("GOT KEY: %v\n", r)
 }
 
 // f(x) = 2x^2 + 3x + 6

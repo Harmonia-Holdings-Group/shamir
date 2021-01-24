@@ -158,16 +158,6 @@ func getLagrangeBasis(points []Point) []*big.Int {
 }
 
 func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]byte, error) {
-	fmt.Printf("\tBASIS:\n")
-	for i := range lagrangeBasis {
-		fmt.Printf("\t\t%d\n", lagrangeBasis[i])
-	}
-
-	fmt.Printf("\tEVS:\n")
-	for i := range polynomialEvaluations {
-		fmt.Printf("\t\t%d\n", polynomialEvaluations[i])
-	}
-
 	if len(polynomialEvaluations) != len(lagrangeBasis) {
 		return [32]byte{}, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
 	}
@@ -180,10 +170,11 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 		res.Mod(res, P)
 	}
 	var resBytes [32]byte
+	fmt.Printf("INTERNAL: %d\n", res)
 	rootBytes := res.Bytes()
-	for i := range rootBytes {
-		resBytes[31-i] = rootBytes[i]
+	if len(rootBytes) > 32 {
+		return [32]byte{}, fmt.Errorf("got root of >32 bytes (%d)", len(rootBytes))
 	}
-
+	copy(resBytes[:], rootBytes)
 	return resBytes, nil
 }
