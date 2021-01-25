@@ -6,10 +6,13 @@ import (
 	"math/rand"
 )
 
-// GenKeyShares generates n key shares (xi, P(xi)) where xi is [1...n] and P(xi) is a 256-bit integer
-// t - 1 represents the degree of the polynomial P used to generate the n key shares
-// which makes only t of them necessary to calculate K key used to encrypt the content
-func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error) {
+// GenKeyShares returns n keys from which only t of them are required to reconstruct the original
+// secret. The keys are generated using Shamir Secret Sharing Scheme so each element of the returned
+// array corresponds to an evaluation from x=1 up to x=n of the randomly generated polynomial f(x)
+// of degree t-1, i.e: data[i] = (i+1, f(i+1)).
+// Note: Polynomial evaluations and coefficients operate under an arithmetic finite field of size P.
+// P is defined under primes.go and it is known to use exactly 257 for its representation.
+func GenKeyShares(secret [32]byte, t, n int) ([][]byte, error) {
 	if t < 2 {
 		return nil, fmt.Errorf("unmet constraint t: %d >= 2", t)
 	}
@@ -20,56 +23,61 @@ func GenKeyShares(secret [32]byte, t, n int) ([][32]byte, error) {
 		return nil, fmt.Errorf("unmet constraint t: %d <= n: %d", t, n)
 	}
 
-	coefficients := make([]*big.Int, t-1)
-	for i := 0; i < t-1; i++ {
-		randomCoefficient := make([]byte, 32)
-		if _, err := rand.Read(randomCoefficient); err != nil {
-			return nil, err
-		}
-		coefficient := big.NewInt(0)
-		coefficient.SetBytes(randomCoefficient)
-		coefficients[i] = coefficient
+	coefficients, err := genRandomCoefficients(t - 1)
+	if err != nil {
+		return nil, err
 	}
 
 	key := big.NewInt(0)
-	secretRep := make([]byte, 32)
-	for i := range secret {
-		secretRep[31-i] = secret[i]
-	}
 	key.SetBytes(secret[:])
+	key = key.Abs(key)
+	key = key.Mod(key, P)
 
-	result := make([][32]byte, n)
-	for i := 1; i <= n; i++ {
-		evaluation := evaluatePolynomial(coefficients, key, big.NewInt(int64(i)))
-		var y [32]byte
-		copy(y[:], evaluation.Bytes())
-		for j := 0; j < 32; j++ {
-			result[i-1][31-j] = y[j]
-		}
-		//copy(result[i-1][:], evaluation.Bytes())
+	coefficients = append(coefficients, key)
+	fxs := evaluatePolynomial(coefficients, n)
+
+	keys := make([][]byte, n)
+	for i := range keys {
+		fx := fxs[i]
+		keys[i] = fx.Bytes()
 	}
 
-	return result, nil
+	return keys, nil
 }
 
-// evaluatePolynomial
-// TODO: add ref to horners method & add proper docstring
-func evaluatePolynomial(coefficients []*big.Int, K, x *big.Int) *big.Int {
-	evaluation := big.NewInt(0)
-	evaluation.Add(evaluation, coefficients[0])
-
-	for i := 1; i < len(coefficients); i++ {
-		evaluation.Mul(evaluation, x)
-		evaluation.Mod(evaluation, P)
-		evaluation.Add(evaluation, coefficients[i])
-		evaluation.Mod(evaluation, P)
+// genRandomCoefficients returns n numbers of 32 random bytes under Zp.
+func genRandomCoefficients(n int) ([]*big.Int, error) {
+	nums := make([]*big.Int, n)
+	for i := 0; i < n; i++ {
+		bytes := make([]byte, 32)
+		if _, err := rand.Read(bytes); err != nil {
+			return nil, err
+		}
+		c := big.NewInt(0)
+		c.SetBytes(bytes)
+		c = c.Abs(c)
+		c = c.Mod(c, P)
+		nums[i] = c
 	}
-	evaluation.Mul(evaluation, x)
-	evaluation.Mod(evaluation, P)
-	evaluation.Add(evaluation, K)
-	evaluation.Mod(evaluation, P)
+	return nums, nil
+}
 
-	return evaluation
+func evaluatePolynomial(coefficients []*big.Int, n int) []*big.Int {
+	fxs := make([]*big.Int, n)
+	for x := 1; x <= n; x++ {
+		y := big.NewInt(0)
+		y.Add(y, coefficients[0])
+
+		for i := 1; i < len(coefficients); i++ {
+			y.Mul(y, big.NewInt(int64(x)))
+			y.Mod(y, P)
+			y.Add(y, coefficients[i])
+			y.Mod(y, P)
+		}
+
+		fxs[x-1] = y
+	}
+	return fxs
 }
 
 type Point struct {

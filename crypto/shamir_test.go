@@ -1,9 +1,9 @@
 package crypto
 
 import (
-	"math/rand"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"testing"
 )
 
@@ -161,82 +161,60 @@ func Test_EvaluatePoly(t *testing.T) {
 	k = k.Mod(k, P)
 	fmt.Printf("Obtained:\n\t%v\n\t(%d)%v\n\n", k, len(k.Bytes()), k.Bytes())
 
-	polyDegree := 3
-	coefficients := make([]*big.Int, polyDegree)
 	fmt.Printf("Generating random poly:\n")
+	polyDegree := 3
+	coefficients, err := genRandomCoefficients(polyDegree)
+	if err != nil {
+		t.Fatalf("genRandomCoefficients(%d) returned unexpected error; %v", polyDegree, err)
+	}
 	for i := range coefficients {
-		coBytes := make([]byte, 32)
-		if _, err := rand.Read(coBytes[:]); err != nil {
-			panic(err)
-		}
-		co := big.NewInt(0)
-		co.SetBytes(coBytes)
-		co = co.Abs(co)
-		co = co.Mod(k, P)
-		fmt.Printf("\t%d:\t%v\n", co, co.Bytes())
-
-		if len(co.Bytes()) > 32 {
-			t.Fatalf("Generated coeficcient out of bound, len: %d", len(co.Bytes()))
-		}
-		coefficients[i] = co
+		fmt.Printf("\t%d:\t%v\n", coefficients[i], coefficients[i].Bytes())
 	}
-	//fmt.Printf("Obtained: ")
-	//for i := range coefficients {
-	//	if i != len(coefficients) - 1 {
-	//		fmt.Printf("%dx^%d + ", coefficients[i], len(coefficients)-i)
-	//	} else {
-	//		fmt.Printf("%dx + %d\n", coefficients[i], k)
-	//	}
-	//}
 
+	coefficients = append(coefficients, k)
 	evaluations := 4
-	points := make([]Point, evaluations)
 	fmt.Printf("\nObtaining %d evaluations:\n", evaluations)
-	for x := 1; x <= evaluations; x++ {
-		input := big.NewInt(int64(x))
-		y := evaluatePolynomial(coefficients, k, input)
-		fmt.Printf("\tf(%d): %d\n", input, y)
+	evals := evaluatePolynomial(coefficients, evaluations)
+	points := make([]Point, evaluations)
+	for i := 0; i < evaluations; i++ {
+		y := evals[i]
+		fmt.Printf("\tf(%d): %d\n", i+1, y)
 
-		//for i := range coefficients {
-		//	if i != len(coefficients) - 1 {
-		//		fmt.Printf("(%d)%d^%d + ", coefficients[i], input, len(coefficients)-i)
-		//	} else {
-		//		fmt.Printf("(%d)%d + %d\n", coefficients[i], input, k)
-		//	}
-		//}
-
-		yBytes := y.Bytes()
-		outBytes := make([]byte, len(yBytes))
-		copy(outBytes, yBytes)
-		fmt.Printf("\t\tmath/big bytes:\t%v\n", yBytes)
-
-
-		//yRecover := big.NewInt(0)
-		//recoverBytes := make([]byte, 33)
-		//copy(recoverBytes[1:], outBytes[:])
-		//recoverBytes[0]=1
-		//yRecover.SetBytes(recoverBytes)
-		//fmt.Printf("\t\tRecovered (without flip) %d\n", yRecover)
-		//
-		//yFlipRecover := big.NewInt(0)
-		//flippedBytes := make([]byte, 33)
-		//for i := range outBytes {
-		//	flippedBytes[31-i] = outBytes[i]
-		//}
-		//flippedBytes[32] = 1
-		//fmt.Printf("\t\tFlipped bytes %v\n", flippedBytes)
-		//yFlipRecover.SetBytes(flippedBytes)
-		//fmt.Printf("\t\tRecovered (flipped) %d\n", yFlipRecover)
-
-		points[x-1] = Point{
-			X:  x,
-			Fx: outBytes,
+		points[i] = Point{
+			X:  i + 1,
+			Fx: y.Bytes(),
 		}
-		//if len(yBytes) > 32 {
-		//	t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
-		//}
-		fmt.Println("")
 	}
+
+	//for x := 1; x <= evaluations; x++ {
+	//
+	//	yBytes := y.Bytes()
+	//	outBytes := make([]byte, len(yBytes))
+	//	copy(outBytes, yBytes)
+	//	fmt.Printf("\t\tmath/big bytes:\t%v\n", yBytes)
+	//
+	//	//yRecover := big.NewInt(0)
+	//	//recoverBytes := make([]byte, 33)
+	//	//copy(recoverBytes[1:], outBytes[:])
+	//	//recoverBytes[0]=1
+	//	//yRecover.SetBytes(recoverBytes)
+	//	//fmt.Printf("\t\tRecovered (without flip) %d\n", yRecover)
+	//	//
+	//	//yFlipRecover := big.NewInt(0)
+	//	//flippedBytes := make([]byte, 33)
+	//	//for i := range outBytes {
+	//	//	flippedBytes[31-i] = outBytes[i]
+	//	//}
+	//	//flippedBytes[32] = 1
+	//	//fmt.Printf("\t\tFlipped bytes %v\n", flippedBytes)
+	//	//yFlipRecover.SetBytes(flippedBytes)
+	//	//fmt.Printf("\t\tRecovered (flipped) %d\n", yFlipRecover)
+	//
+	//	//if len(yBytes) > 32 {
+	//	//	t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
+	//	//}
+	//	fmt.Println("")
+	//}
 
 	fmt.Println("\nObtaining Lagrange Basis:")
 	basis := getLagrangeBasis(points)
@@ -304,13 +282,11 @@ func Test_EvaluatePoly(t *testing.T) {
 // f(2) = 9 |  = 8 + 6 + 6 = (8 + 6) % 11 + 6 = (3 + 6) % 11 = 9
 // f(3) = 0  |  = 9*2 + 3*3 + 6 = 18%11 + 9 + 6 = 7 + 9 + 6 = 16%11 + 6 = (5+6) % 11 = 0
 
-
 // BASIS
 //
 // p1 = (-2 * -3) / [(1 + -2) (1 + -3)] = (9 * 8 % 11) / (1 + 9 % 11) (9) = (6) / [10 * 9] = 6 * inv(2) = 6 * 6 = 36%11 = 3
 // p2 = (-1 * -3) / [(2 + -1) (2 + -3)] = (10 * 8 % 11) / (2+10)(2+8) = 3 / (1)(10) = 3 / 10 = 3 * inv(10) = 3*10 = 30%11 = 8
 // p3 = (-1 * -2) / [(3 + -1) (3 + -2)] = (10 * 9 % 11) / (3+10)(2+9) = 2 / (2)(0) = 2 / 0 = 2 * inv(0) = 2 *
-
 
 // p1 = (0-2/1-2) * (0-3/1-3) = (-2/-1) * (-3/-2) = (9 * inv10) (8 * inv9) = (9*10) (8*5) = 2 * 7 = 3
 // p2 = (0-1/2-1) * (0-3/2-3) = (-1/1) * (-3/-1) = (10 * inv1) (8 * inv10) = (10*1) (8*10) = 10 * 3 = 8
