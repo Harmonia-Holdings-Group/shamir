@@ -1,222 +1,153 @@
 package crypto
 
 import (
-	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-	"math/big"
+	"strings"
 	"testing"
+
+	mrand "math/rand"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // Test_KeyGeneration tests GenKeyShares and GetKeyFromKeyShares methods.
-//func Test_KeyGeneration(t *testing.T) {
-//	tests := []struct {
-//		name                    string
-//		inputKey                string // 256-bit base64 encoded key
-//		keyShares               int
-//		keyThreshold            int
-//		wantKeyMatch            bool
-//		useKeys                 int
-//		wantCreationError       bool
-//		wantReconstructionError bool
-//	}{
-//		{
-//			name:         "successful key generation (t: 5, n: 20) with exact number of keys",
-//			inputKey:     "7ezI6kdQ7fX4ekK8dRRSmOriR9SNKhV3OZ0k2CYnVTE=",
-//			keyShares:    20,
-//			keyThreshold: 5,
-//			useKeys:      5,
-//			wantKeyMatch: true,
-//		},
-//		{
-//			name:         "successful key generation (t: 5, n: 20) with extra keys",
-//			inputKey:     "NplIPa8T6fhgq+Mr6aGPekoaDeyjZymLLLSTzz1Me8I=",
-//			keyShares:    20,
-//			keyThreshold: 5,
-//			useKeys:      11,
-//			wantKeyMatch: true,
-//		},
-//		{
-//			name:         "successful key generation (t: 5, n: 20) with all keys",
-//			inputKey:     "+jbb2q+dZgHQ4czlTpUmOVc7cQ1XS3BFf4ENVs5lF9c=",
-//			keyShares:    20,
-//			keyThreshold: 10,
-//			useKeys:      20,
-//			wantKeyMatch: true,
-//		},
-//		{
-//			name:         "unsuccessful key generation (t: 5, n: 10) missing one key",
-//			inputKey:     "JBP7NwmwWTnwTPLpL30Il/wllvmtC4qeqFXHv+uq6JI=",
-//			keyShares:    10,
-//			keyThreshold: 5,
-//			useKeys:      4,
-//			wantKeyMatch: false,
-//		},
-//		{
-//			name:                    "unsuccessful key generation (t: 5, n: 10) without keys",
-//			inputKey:                "pgKBrF7WTdfmantSLeGpV4IyIFpIUAHshHk8DBAuypU=",
-//			keyShares:               10,
-//			keyThreshold:            5,
-//			useKeys:                 0,
-//			wantReconstructionError: true,
-//			wantKeyMatch:            false,
-//		},
-//		{
-//			name:              "unsuccessful key generation (t: 2, n: 2) invalid number of key shares",
-//			inputKey:          "zM5q1g8atTJ7Egd0zuQjYtr288p0xo6aQ6c1z641ROQ=",
-//			keyShares:         2,
-//			keyThreshold:      2,
-//			useKeys:           2,
-//			wantCreationError: true,
-//			wantKeyMatch:      false,
-//		},
-//		{
-//			name:              "unsuccessful key generation (t: 1, n: 3) invalid key threshold number",
-//			inputKey:          "Qlco35ne5pbmhu5eBbFOp2yCLMdNFD/IJ9sq+ZcdoRY=",
-//			keyShares:         3,
-//			keyThreshold:      1,
-//			useKeys:           3,
-//			wantCreationError: true,
-//			wantKeyMatch:      false,
-//		},
-//		{
-//			name:              "unsuccessful key generation (t: 4, n: 3) larger key threshold number",
-//			inputKey:          "Vzf3CgLH9b655mSoZ2HrMbr9VoVv7YrOIjflbe4IcKs=",
-//			keyShares:         3,
-//			keyThreshold:      4,
-//			useKeys:           3,
-//			wantCreationError: true,
-//			wantKeyMatch:      false,
-//		},
-//	}
-//	for _, test := range tests {
-//		t.Run(test.name, func(t *testing.T) {
-//			keyBytes, err := base64.StdEncoding.DecodeString(test.inputKey)
-//			if err != nil {
-//				t.Fatalf("Unexpected error occurred while decoding key; %v", err)
-//			}
-//			var key [32]byte
-//			copy(key[:], keyBytes)
-//
-//			keys, err := GenKeyShares(key, test.keyThreshold, test.keyShares)
-//			if err != nil && !test.wantCreationError {
-//				t.Fatalf("GenKeyShares(%s, t:%d, n:%d) returned unexpected error; %v", test.inputKey, test.keyThreshold, test.keyShares, err)
-//			}
-//			if err == nil && test.wantCreationError {
-//				t.Fatalf("GenKeyShares(%s, t:%d, n:%d) returned nil error, want errror", test.inputKey, test.keyThreshold, test.keyShares)
-//			}
-//			if test.wantCreationError {
-//				return
-//			}
-//
-//			pointsMap := make(map[int]bool, test.useKeys)
-//			points := make([]Point, 0, test.useKeys)
-//
-//			// Computed just for readable test output
-//			var encodedPoints strings.Builder
-//			encodedPoints.WriteString("\n")
-//
-//			for len(points) < test.useKeys {
-//				x := rand.Intn(test.keyShares) + 1
-//				if ok := pointsMap[x]; ok {
-//					continue
-//				}
-//				pointsMap[x] = true
-//				points = append(points, Point{X: x, Fx: keys[x-1]})
-//				encodedPoints.WriteString(fmt.Sprintf("\t'%d-%s'\n", x, base64.StdEncoding.EncodeToString(keys[x-1][:])))
-//			}
-//
-//			derivedKey, err := GetKeyFromKeyShares(points)
-//			if err != nil && !test.wantReconstructionError {
-//				t.Fatalf("GetKeyFromKeyShares(%s) returned unexpected error; %v", encodedPoints.String(), err)
-//			}
-//			if err == nil && test.wantReconstructionError {
-//				t.Fatalf("GetKeyFromKeyShares(%s) returned nil error, want error", encodedPoints.String())
-//			}
-//			if test.wantReconstructionError {
-//				return
-//			}
-//
-//			decodedKey := base64.StdEncoding.EncodeToString(derivedKey[:])
-//			diff := cmp.Diff(test.inputKey, decodedKey)
-//			if diff != "" && test.wantKeyMatch {
-//				t.Errorf("GetKeyFromKeyShares(%s): %q, want %q, diff want->got: %s", encodedPoints.String(), decodedKey, test.inputKey, diff)
-//			}
-//			if diff == "" && !test.wantKeyMatch {
-//				t.Errorf("GetKeyFromKeyShares(%s) returned matching key %q when unexpected", encodedPoints.String(), test.inputKey)
-//			}
-//		})
-//	}
-//}
-
-func Test_EvaluatePoly(t *testing.T) {
-	fmt.Println("Generating key...")
-	keyBytes := make([]byte, 32)
-	if _, err := rand.Read(keyBytes); err != nil {
-		panic(err)
+func Test_KeyGeneration(t *testing.T) {
+	tests := []struct {
+		name                    string
+		inputKey                string // 256-bit base64 encoded key
+		keyShares               int
+		keyThreshold            int
+		wantKeyMatch            bool
+		useKeys                 int
+		wantCreationError       bool
+		wantReconstructionError bool
+	}{
+		{
+			name:         "successful key generation (t: 5, n: 20) with exact number of keys",
+			inputKey:     "7ezI6kdQ7fX4ekK8dRRSmOriR9SNKhV3OZ0k2CYnVTE=",
+			keyShares:    20,
+			keyThreshold: 5,
+			useKeys:      5,
+			wantKeyMatch: true,
+		},
+		{
+			name:         "successful key generation (t: 5, n: 20) with extra keys",
+			inputKey:     "NplIPa8T6fhgq+Mr6aGPekoaDeyjZymLLLSTzz1Me8I=",
+			keyShares:    20,
+			keyThreshold: 5,
+			useKeys:      11,
+			wantKeyMatch: true,
+		},
+		{
+			name:         "successful key generation (t: 5, n: 20) with all keys",
+			inputKey:     "+jbb2q+dZgHQ4czlTpUmOVc7cQ1XS3BFf4ENVs5lF9c=",
+			keyShares:    20,
+			keyThreshold: 10,
+			useKeys:      20,
+			wantKeyMatch: true,
+		},
+		{
+			name:         "unsuccessful key generation (t: 5, n: 10) missing one key",
+			inputKey:     "JBP7NwmwWTnwTPLpL30Il/wllvmtC4qeqFXHv+uq6JI=",
+			keyShares:    10,
+			keyThreshold: 5,
+			useKeys:      4,
+			wantKeyMatch: false,
+		},
+		{
+			name:                    "unsuccessful key generation (t: 5, n: 10) without keys",
+			inputKey:                "pgKBrF7WTdfmantSLeGpV4IyIFpIUAHshHk8DBAuypU=",
+			keyShares:               10,
+			keyThreshold:            5,
+			useKeys:                 0,
+			wantReconstructionError: true,
+			wantKeyMatch:            false,
+		},
+		{
+			name:              "unsuccessful key generation (t: 2, n: 2) invalid number of key shares",
+			inputKey:          "zM5q1g8atTJ7Egd0zuQjYtr288p0xo6aQ6c1z641ROQ=",
+			keyShares:         2,
+			keyThreshold:      2,
+			useKeys:           2,
+			wantCreationError: true,
+			wantKeyMatch:      false,
+		},
+		{
+			name:              "unsuccessful key generation (t: 1, n: 3) invalid key threshold number",
+			inputKey:          "Qlco35ne5pbmhu5eBbFOp2yCLMdNFD/IJ9sq+ZcdoRY=",
+			keyShares:         3,
+			keyThreshold:      1,
+			useKeys:           3,
+			wantCreationError: true,
+			wantKeyMatch:      false,
+		},
+		{
+			name:              "unsuccessful key generation (t: 4, n: 3) larger key threshold number",
+			inputKey:          "Vzf3CgLH9b655mSoZ2HrMbr9VoVv7YrOIjflbe4IcKs=",
+			keyShares:         3,
+			keyThreshold:      4,
+			useKeys:           3,
+			wantCreationError: true,
+			wantKeyMatch:      false,
+		},
 	}
-	k := big.NewInt(0)
-	k.SetBytes(keyBytes)
-	k = k.Abs(k)
-	k = k.Mod(k, P)
-	fmt.Printf("Obtained:\n\t%v\n\t(%d)%v\n\n", k, len(k.Bytes()), k.Bytes())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			keyBytes, err := base64.StdEncoding.DecodeString(test.inputKey)
+			if err != nil {
+				t.Fatalf("Unexpected error occurred while decoding key; %v", err)
+			}
+			var key [32]byte
+			copy(key[:], keyBytes)
 
-	fmt.Printf("Generating random poly:\n")
-	polyDegree := 3
-	coefficients, err := genRandomCoefficients(polyDegree)
-	if err != nil {
-		t.Fatalf("genRandomCoefficients(%d) returned unexpected error; %v", polyDegree, err)
-	}
-	for i := range coefficients {
-		fmt.Printf("\t%d:\t%v\n", coefficients[i], coefficients[i].Bytes())
-	}
+			keys, err := GenKeyShares(key, test.keyThreshold, test.keyShares)
+			if err != nil && !test.wantCreationError {
+				t.Fatalf("GenKeyShares(%s, t:%d, n:%d) returned unexpected error; %v", test.inputKey, test.keyThreshold, test.keyShares, err)
+			}
+			if err == nil && test.wantCreationError {
+				t.Fatalf("GenKeyShares(%s, t:%d, n:%d) returned nil error, want errror", test.inputKey, test.keyThreshold, test.keyShares)
+			}
+			if test.wantCreationError {
+				return
+			}
 
-	coefficients = append(coefficients, k)
-	evaluations := 4
-	fmt.Printf("\nObtaining %d evaluations:\n", evaluations)
-	evals := evaluatePolynomial(coefficients, evaluations)
-	points := make([]Point, evaluations)
-	for i := 0; i < evaluations; i++ {
-		y := evals[i]
-		fmt.Printf("\tf(%d): %d\n", i+1, y)
+			pointsMap := make(map[int]bool, test.useKeys)
+			points := make([]Point, 0, test.useKeys)
 
-		points[i] = Point{
-			X:  i + 1,
-			Fx: y.Bytes(),
-		}
-	}
+			// Computed just for readable test output
+			var encodedPoints strings.Builder
+			encodedPoints.WriteString("\n")
 
-	fmt.Println("\nObtaining Lagrange Basis:")
-	basis := lagrangeBasis(points)
-	for _, b := range basis {
-		fmt.Printf("\t%v\n", b)
-	}
+			for len(points) < test.useKeys {
+				x := mrand.Intn(test.keyShares) + 1
+				if ok := pointsMap[x]; ok {
+					continue
+				}
+				pointsMap[x] = true
+				points = append(points, Point{X: x, Fx: keys[x-1]})
+				encodedPoints.WriteString(fmt.Sprintf("\t'%d-%s'\n", x, base64.StdEncoding.EncodeToString(keys[x-1][:])))
+			}
 
-	fmt.Println("\n\nParsing point evaluations:")
-	evs := make([]*big.Int, len(points))
-	for i := range points {
-		evBytes := points[i].Fx
-		fmt.Printf("\tReading\t%v\n", evBytes)
-		parsedResult := big.NewInt(0)
-		//for j := range evBytes {
-		//	container[32-j] = evBytes[j]
-		//}
-		//fmt.Printf("\tWrote\t%v\n", container)
-		parsedResult.SetBytes(evBytes)
-		fmt.Printf("\tInterpreted as:\t%v\n", parsedResult)
-		fmt.Printf("\t\tmath/big bytes\t%v\n\n", parsedResult.Bytes())
-		evs[i] = parsedResult
-	}
+			derivedKey, err := GetKeyFromKeyShares(points)
+			if err != nil && !test.wantReconstructionError {
+				t.Fatalf("GetKeyFromKeyShares(%s) returned unexpected error; %v", encodedPoints.String(), err)
+			}
+			if err == nil && test.wantReconstructionError {
+				t.Fatalf("GetKeyFromKeyShares(%s) returned nil error, want error", encodedPoints.String())
+			}
+			if test.wantReconstructionError {
+				return
+			}
 
-	fmt.Println("\n\nObtaining root:")
-	root, err := findPolynomialRoot(basis, evs)
-	if err != nil {
-		panic(err)
-	}
-
-	want := fmt.Sprintf("%d", k)
-	got := fmt.Sprintf("%d", root)
-	fmt.Printf("\twant: %s\n\tgot: %s\n", want, got)
-	if want != got {
-		t.Fatalf("GOT DIFFERENT KEYS")
+			decodedKey := base64.StdEncoding.EncodeToString(derivedKey[:])
+			diff := cmp.Diff(test.inputKey, decodedKey)
+			if diff != "" && test.wantKeyMatch {
+				t.Errorf("GetKeyFromKeyShares(%s): %q, want %q, diff want->got: %s", encodedPoints.String(), decodedKey, test.inputKey, diff)
+			}
+			if diff == "" && !test.wantKeyMatch {
+				t.Errorf("GetKeyFromKeyShares(%s) returned matching key %q when unexpected", encodedPoints.String(), test.inputKey)
+			}
+		})
 	}
 }
