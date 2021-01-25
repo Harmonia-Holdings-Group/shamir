@@ -74,12 +74,12 @@ func evaluatePolynomial(coefficients []*big.Int, K, x *big.Int) *big.Int {
 
 type Point struct {
 	X  int
-	Fx [32]byte
+	Fx []byte
 }
 
-func GetKeyFromKeyShares(points []Point) ([32]byte, error) {
+func GetKeyFromKeyShares(points []Point) ([]byte, error) {
 	if len(points) < 2 {
-		return [32]byte{}, fmt.Errorf("got %d, wants at least 2", len(points))
+		return []byte{}, fmt.Errorf("got %d, wants at least 2", len(points))
 	}
 
 	//fxs := make([]*big.Int, 32)
@@ -157,9 +157,9 @@ func getLagrangeBasis(points []Point) []*big.Int {
 	return res
 }
 
-func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]byte, error) {
+func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([]byte, error) {
 	if len(polynomialEvaluations) != len(lagrangeBasis) {
-		return [32]byte{}, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
+		return []byte{}, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
 	}
 	res := big.NewInt(0)
 	for i := 0; i < len(polynomialEvaluations); i++ {
@@ -169,11 +169,5 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 		res.Add(res, currentAddend)
 		res.Mod(res, P)
 	}
-	var resBytes [32]byte
-	rootBytes := res.Bytes()
-	if len(rootBytes) > 32 {
-		return [32]byte{}, fmt.Errorf("got root of >32 bytes (%d)", len(rootBytes))
-	}
-	copy(resBytes[:], rootBytes)
-	return resBytes, nil
+	return res.Bytes(), nil
 }

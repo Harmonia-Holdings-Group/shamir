@@ -149,18 +149,14 @@ import (
 //}
 
 func Test_EvaluatePoly(t *testing.T) {
-	myMod := big.NewInt(-1)
-	fmt.Println(myMod.Mod(myMod, big.NewInt(11)))
-
-
-	rand.Seed(4356783245)
+	rand.Seed(2332234343344356)
 	fmt.Println("Generating key...")
-	var keyBytes [32]byte
-	if _, err := rand.Read(keyBytes[:]); err != nil {
+	keyBytes := make([]byte, 32)
+	if _, err := rand.Read(keyBytes); err != nil {
 		panic(err)
 	}
 	k := big.NewInt(0)
-	k.SetBytes(keyBytes[:])
+	k.SetBytes(keyBytes)
 	k = k.Abs(k)
 	k = k.Mod(k, P)
 	fmt.Printf("Obtained:\n\t%v\n\t(%d)%v\n\n", k, len(k.Bytes()), k.Bytes())
@@ -210,15 +206,10 @@ func Test_EvaluatePoly(t *testing.T) {
 		//}
 
 		yBytes := y.Bytes()
+		outBytes := make([]byte, len(yBytes))
+		copy(outBytes, yBytes)
 		fmt.Printf("\t\tmath/big bytes:\t%v\n", yBytes)
 
-		if yBytes[0] == 1 {
-			yBytes = yBytes[1:]
-		}
-
-  		var outBytes [32]byte
-		copy(outBytes[:], yBytes) // ⚠️⚠️⚠️⚠️ Byte array flipped order
-		fmt.Printf("\t\t[32]byte:\t%v\n", outBytes)
 
 		//yRecover := big.NewInt(0)
 		//recoverBytes := make([]byte, 33)
@@ -241,9 +232,9 @@ func Test_EvaluatePoly(t *testing.T) {
 			X:  x,
 			Fx: outBytes,
 		}
-		if len(yBytes) > 32 {
-			t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
-		}
+		//if len(yBytes) > 32 {
+		//	t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
+		//}
 		fmt.Println("")
 	}
 
@@ -259,14 +250,11 @@ func Test_EvaluatePoly(t *testing.T) {
 		evBytes := points[i].Fx
 		fmt.Printf("\tReading\t%v\n", evBytes)
 		parsedResult := big.NewInt(0)
-		container := make([]byte, 33)
-		container[0] = 1
-		copy(container[1:], evBytes[:])
 		//for j := range evBytes {
 		//	container[32-j] = evBytes[j]
 		//}
-		fmt.Printf("\tWrote\t%v\n", container)
-		parsedResult.SetBytes(container[:])
+		//fmt.Printf("\tWrote\t%v\n", container)
+		parsedResult.SetBytes(evBytes)
 		fmt.Printf("\tInterpreted as:\t%v\n", parsedResult)
 		fmt.Printf("\t\tmath/big bytes\t%v\n\n", parsedResult.Bytes())
 		evs[i] = parsedResult
