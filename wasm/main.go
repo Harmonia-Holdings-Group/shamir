@@ -49,7 +49,6 @@ func encrypt(_ js.Value, args []js.Value) interface{} {
 }
 
 func genKeys(_ js.Value, args []js.Value) interface{} {
-	fmt.Println("CALLING GEN KEYS")
 	if len(args) != 3 {
 		return handleError(fmt.Errorf("got %d args, want 3", len(args)))
 	}
@@ -72,8 +71,6 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 	for i, k := range keysBytes {
 		encodedString := base64.StdEncoding.EncodeToString(k)
 		keys[i] = fmt.Sprintf("%d-%s", i+1, encodedString)
-		fmt.Printf("%d got bytes: %v\n", i+1, k)
-		fmt.Printf("%d encoded: %s\n\n", i+1, encodedString)
 	}
 
 	return keys
@@ -123,13 +120,11 @@ func decrypt(_ js.Value, args []js.Value) interface{} {
 	for i := 0; i < args[1].Length(); i++ {
 		fileContent[i] = byte(args[1].Index(i).Int())
 	}
-	fmt.Printf("Go [Content to decrypt] %v\n", fileContent)
 
 	content, err := crypto.Decrypt(key, fileContent)
 	if err != nil {
 		return handleError(fmt.Errorf("failed decrypting file; %v", err))
 	}
-	fmt.Printf("Go: [Decrypted content] %v\n", content)
 	return base64.StdEncoding.EncodeToString(content)
 }
 
