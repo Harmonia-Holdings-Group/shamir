@@ -38,7 +38,6 @@ func encrypt(_ js.Value, args []js.Value) interface{} {
 	for i := 0; i < args[1].Length(); i++ {
 		fileContent[i] = byte(args[1].Index(i).Int())
 	}
-	fmt.Printf("Go: [Content to encrypt] %v\n", fileContent)
 	key, encrypted, err := crypto.Encrypt(gotKey, fileContent)
 	if err != nil {
 		return handleError(err)
@@ -50,12 +49,10 @@ func encrypt(_ js.Value, args []js.Value) interface{} {
 }
 
 func genKeys(_ js.Value, args []js.Value) interface{} {
+	fmt.Println("CALLING GEN KEYS")
 	if len(args) != 3 {
 		return handleError(fmt.Errorf("got %d args, want 3", len(args)))
 	}
-	fmt.Println(args[0])
-	fmt.Println(args[1])
-	fmt.Println(args[2])
 	var secretBytes [32]byte
 	secret, err := base64.StdEncoding.DecodeString(args[0].String())
 	if err != nil {
@@ -65,7 +62,6 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 	copy(secretBytes[:], secret)
 	k := args[1].Int()
 	n := args[2].Int()
-	fmt.Printf("genKeys(k: %d, n:%d)\n", k, n)
 
 	keysBytes, err := crypto.GenKeyShares(secretBytes, k, n)
 	if err != nil {
@@ -74,8 +70,10 @@ func genKeys(_ js.Value, args []js.Value) interface{} {
 
 	keys := make([]interface{}, len(keysBytes))
 	for i, k := range keysBytes {
-		encodedString := base64.StdEncoding.EncodeToString(k[:])
+		encodedString := base64.StdEncoding.EncodeToString(k)
 		keys[i] = fmt.Sprintf("%d-%s", i+1, encodedString)
+		fmt.Printf("%d got bytes: %v\n", i+1, k)
+		fmt.Printf("%d encoded: %s\n\n", i+1, encodedString)
 	}
 
 	return keys
@@ -91,7 +89,6 @@ func getKeyFromKeyShares(_ js.Value, args []js.Value) interface{} {
 	keys := make([]crypto.Point, args[0].Length())
 	for i := 0; i < args[0].Length(); i++ {
 		keyStr := args[0].Index(i).String()
-		fmt.Printf("Go: %s\n", keyStr)
 		key := strings.SplitN(keyStr, "-", 2)
 		if len(key) != 2 {
 			return handleError(fmt.Errorf("got invalid key format, wants x-f(x) for key %q", keyStr))
@@ -104,9 +101,7 @@ func getKeyFromKeyShares(_ js.Value, args []js.Value) interface{} {
 		if err != nil {
 			return handleError(fmt.Errorf("failed decoding key; %v", err))
 		}
-		var fx [32]byte
-		copy(fx[:], decoded)
-		keys[i] = crypto.Point{X: x, Fx: fx}
+		keys[i] = crypto.Point{X: x, Fx: decoded}
 	}
 	key, err := crypto.GetKeyFromKeyShares(keys)
 	if err != nil {
