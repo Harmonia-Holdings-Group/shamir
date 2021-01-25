@@ -1,7 +1,7 @@
 package crypto
 
 import (
-	"crypto/rand"
+	"math/rand"
 	"fmt"
 	"math/big"
 	"testing"
@@ -149,45 +149,49 @@ import (
 //}
 
 func Test_EvaluatePoly(t *testing.T) {
-	wordSize := 1
+	myMod := big.NewInt(-1)
+	fmt.Println(myMod.Mod(myMod, big.NewInt(11)))
 
+
+	rand.Seed(4356783245)
 	fmt.Println("Generating key...")
 	var keyBytes [32]byte
-	if _, err := rand.Read(keyBytes[31:]); err != nil {
+	if _, err := rand.Read(keyBytes[:]); err != nil {
 		panic(err)
 	}
 	k := big.NewInt(0)
 	k.SetBytes(keyBytes[:])
 	k = k.Abs(k)
 	k = k.Mod(k, P)
-	fmt.Printf("Obtained:\t%v %v\n\n", k, k.Bytes())
+	fmt.Printf("Obtained:\n\t%v\n\t(%d)%v\n\n", k, len(k.Bytes()), k.Bytes())
 
 	polyDegree := 3
 	coefficients := make([]*big.Int, polyDegree)
 	fmt.Printf("Generating random poly:\n")
 	for i := range coefficients {
 		coBytes := make([]byte, 32)
-		if _, err := rand.Read(coBytes[32-wordSize:]); err != nil {
+		if _, err := rand.Read(coBytes[:]); err != nil {
 			panic(err)
 		}
 		co := big.NewInt(0)
 		co.SetBytes(coBytes)
 		co = co.Abs(co)
+		co = co.Mod(k, P)
 		fmt.Printf("\t%d:\t%v\n", co, co.Bytes())
 
-		if len(co.Bytes()) != wordSize {
-			t.Fatalf("INVALID CO GENERATION!!!!!!")
+		if len(co.Bytes()) > 32 {
+			t.Fatalf("Generated coeficcient out of bound, len: %d", len(co.Bytes()))
 		}
 		coefficients[i] = co
 	}
-	fmt.Printf("Obtained: ")
-	for i := range coefficients {
-		if i != len(coefficients) - 1 {
-			fmt.Printf("%dx^%d + ", coefficients[i], len(coefficients)-i)
-		} else {
-			fmt.Printf("%dx + %d\n", coefficients[i], k)
-		}
-	}
+	//fmt.Printf("Obtained: ")
+	//for i := range coefficients {
+	//	if i != len(coefficients) - 1 {
+	//		fmt.Printf("%dx^%d + ", coefficients[i], len(coefficients)-i)
+	//	} else {
+	//		fmt.Printf("%dx + %d\n", coefficients[i], k)
+	//	}
+	//}
 
 	evaluations := 4
 	points := make([]Point, evaluations)
@@ -195,28 +199,52 @@ func Test_EvaluatePoly(t *testing.T) {
 	for x := 1; x <= evaluations; x++ {
 		input := big.NewInt(int64(x))
 		y := evaluatePolynomial(coefficients, k, input)
-		fmt.Printf("\tf(%d): %d\n\t\t", input, y)
+		fmt.Printf("\tf(%d): %d\n", input, y)
 
-		for i := range coefficients {
-			if i != len(coefficients) - 1 {
-				fmt.Printf("(%d)%d^%d + ", coefficients[i], input, len(coefficients)-i)
-			} else {
-				fmt.Printf("(%d)%d + %d\n", coefficients[i], input, k)
-			}
-		}
+		//for i := range coefficients {
+		//	if i != len(coefficients) - 1 {
+		//		fmt.Printf("(%d)%d^%d + ", coefficients[i], input, len(coefficients)-i)
+		//	} else {
+		//		fmt.Printf("(%d)%d + %d\n", coefficients[i], input, k)
+		//	}
+		//}
 
 		yBytes := y.Bytes()
-		var outBytes [32]byte
+		fmt.Printf("\t\tmath/big bytes:\t%v\n", yBytes)
+
+		if yBytes[0] == 1 {
+			yBytes = yBytes[1:]
+		}
+
+  		var outBytes [32]byte
 		copy(outBytes[:], yBytes) // ⚠️⚠️⚠️⚠️ Byte array flipped order
-		fmt.Printf("\t\tmath/big bytes: %v\n", yBytes)
-		fmt.Printf("\t\t[32]byte: %v\n", outBytes)
-		yRecover := big.NewInt(0)
-		yRecover.SetBytes(outBytes[:])
-		//fmt.Printf("\t\tRecovered %d\n", yRecover)
+		fmt.Printf("\t\t[32]byte:\t%v\n", outBytes)
+
+		//yRecover := big.NewInt(0)
+		//recoverBytes := make([]byte, 33)
+		//copy(recoverBytes[1:], outBytes[:])
+		//recoverBytes[0]=1
+		//yRecover.SetBytes(recoverBytes)
+		//fmt.Printf("\t\tRecovered (without flip) %d\n", yRecover)
+		//
+		//yFlipRecover := big.NewInt(0)
+		//flippedBytes := make([]byte, 33)
+		//for i := range outBytes {
+		//	flippedBytes[31-i] = outBytes[i]
+		//}
+		//flippedBytes[32] = 1
+		//fmt.Printf("\t\tFlipped bytes %v\n", flippedBytes)
+		//yFlipRecover.SetBytes(flippedBytes)
+		//fmt.Printf("\t\tRecovered (flipped) %d\n", yFlipRecover)
+
 		points[x-1] = Point{
 			X:  x,
 			Fx: outBytes,
 		}
+		if len(yBytes) > 32 {
+			t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
+		}
+		fmt.Println("")
 	}
 
 	fmt.Println("\nObtaining Lagrange Basis:")
@@ -229,16 +257,18 @@ func Test_EvaluatePoly(t *testing.T) {
 	evs := make([]*big.Int, len(points))
 	for i := range points {
 		evBytes := points[i].Fx
-		fmt.Printf("\tReading %v", evBytes)
+		fmt.Printf("\tReading\t%v\n", evBytes)
 		parsedResult := big.NewInt(0)
-		container := make([]byte, 32)
-		for j := range evBytes {
-			container[31-j] = evBytes[j]
-		}
-		fmt.Printf("\tWrote %v", container)
+		container := make([]byte, 33)
+		container[0] = 1
+		copy(container[1:], evBytes[:])
+		//for j := range evBytes {
+		//	container[32-j] = evBytes[j]
+		//}
+		fmt.Printf("\tWrote\t%v\n", container)
 		parsedResult.SetBytes(container[:])
-		fmt.Printf("\tInterpreted as: %v\n", parsedResult)
-		fmt.Printf("\t\tmath/big bytes %v\n", parsedResult.Bytes())
+		fmt.Printf("\tInterpreted as:\t%v\n", parsedResult)
+		fmt.Printf("\t\tmath/big bytes\t%v\n\n", parsedResult.Bytes())
 		evs[i] = parsedResult
 	}
 
@@ -247,7 +277,16 @@ func Test_EvaluatePoly(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("\t(bytes) %v", root)
+	fmt.Printf("\t(bytes) %v\n", root)
+
+	want := fmt.Sprintf("%d", k)
+	rootInt := big.NewInt(0)
+	rootInt.SetBytes(root[:])
+	got := fmt.Sprintf("%d", rootInt)
+	fmt.Printf("\twant: %s\n\tgot: %s\n", want, got)
+	if want != got {
+		t.Fatalf("GOT DIFFERENT KEYS")
+	}
 	//fmt.Println("\tPrinting evaluations:")
 	//evs := make([]*big.Int, len(points))
 	//for i := range points {

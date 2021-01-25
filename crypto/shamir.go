@@ -170,7 +170,6 @@ func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([32]by
 		res.Mod(res, P)
 	}
 	var resBytes [32]byte
-	fmt.Printf("INTERNAL: %d\n", res)
 	rootBytes := res.Bytes()
 	if len(rootBytes) > 32 {
 		return [32]byte{}, fmt.Errorf("got root of >32 bytes (%d)", len(rootBytes))
