@@ -121,6 +121,10 @@ func decrypt(_ js.Value, args []js.Value) interface{} {
 		fileContent[i] = byte(args[1].Index(i).Int())
 	}
 
+	if len(key) != 32 {
+		return handleError(fmt.Errorf("invalid key"))
+	}
+
 	content, err := crypto.Decrypt(key, fileContent)
 	if err != nil {
 		return handleError(fmt.Errorf("failed decrypting file; %v", err))
