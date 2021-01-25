@@ -77,7 +77,6 @@ class Encrypt extends React.Component {
       }
       console.log(`ENCRYPTED BYTES: ${encryptedBytes}`)
       const blob = new Blob([encryptedBytes])
-      debugger;
       const keys = global.GoGenKeys(
         wasmOut[0],
         parseInt(this.state.keyThreshold),
