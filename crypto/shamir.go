@@ -62,6 +62,10 @@ func genRandomCoefficients(n int) ([]*big.Int, error) {
 	return nums, nil
 }
 
+// evaluatePolynomial takes the coefficients of a polynomial of degree n=len(coefficients)-1
+// in descending order, i.e: coefficients[0] = a_n and coefficients[n-1] = a_0, and computes the
+// result of evaluating said polynomial for points [1, n]. Computation is done in linear time
+// using Horner's method https://en.wikipedia.org/wiki/Horner%27s_method.
 func evaluatePolynomial(coefficients []*big.Int, n int) []*big.Int {
 	fxs := make([]*big.Int, n)
 	for x := 1; x <= n; x++ {
@@ -80,6 +84,7 @@ func evaluatePolynomial(coefficients []*big.Int, n int) []*big.Int {
 	return fxs
 }
 
+// Point is contains the evaluation of a polynomial at point X, i.e: f(X).
 type Point struct {
 	X  int
 	Fx []byte
@@ -90,39 +95,25 @@ func GetKeyFromKeyShares(points []Point) ([]byte, error) {
 		return []byte{}, fmt.Errorf("got %d, wants at least 2", len(points))
 	}
 
-	//fxs := make([]*big.Int, 32)
-	//for i := range points {
-	//	p := points[i]
-	//	fx := make([]byte, 32)
-	//	for i := range fx {
-	//		fx[31-i] = p.Fx[i]
-	//	}
-	//	fxInt := big.NewInt(0)
-	//	fxInt.SetBytes(fx)
-	//	fxs[i] = fxInt
-	//}
-
-	lagrangeBasis := getLagrangeBasis(points)
-	polynomialEvaluations := make([]*big.Int, len(points))
-	fmt.Println("VOLTEANDO EVALUATIONS!!!!")
+	basis := lagrangeBasis(points)
+	evs := make([]*big.Int, len(points))
 	for i := range points {
-		p := points[i]
-		bigInt := big.NewInt(0)
-		fx := make([]byte, 32)
-		copy(fx[:], p.Fx[:])
-		//for i := range fx {
-		//	fx[31-i] = p.Fx[i]
-		//}
-		bigInt.SetBytes(fx[:])
-		fmt.Printf("\t%v\n", fx)
-		polynomialEvaluations[i] = bigInt
+		bytes := points[i].Fx
+		fx := big.NewInt(0)
+		fx.SetBytes(bytes)
+		evs[i] = fx
 	}
-
-	return findPolynomialRoot(lagrangeBasis, polynomialEvaluations)
+	root, err := findPolynomialRoot(basis, evs)
+	if err != nil {
+		return nil, err
+	}
+	return root.Bytes(), nil
 }
 
-func getLagrangeBasis(points []Point) []*big.Int {
-	res := make([]*big.Int, len(points))
+// lagrangeBasis computes the basis required for the polynomial interpolation using Lagrange the
+// polynomials. https://en.wikipedia.org/wiki/Lagrange_polynomial
+func lagrangeBasis(points []Point) []*big.Int {
+	basis := make([]*big.Int, len(points))
 	for i := range points {
 		pi0 := big.NewInt(0)
 		numerator := big.NewInt(1)
@@ -159,23 +150,26 @@ func getLagrangeBasis(points []Point) []*big.Int {
 		// Calculate division (numerator * denominator) mod p
 		pi0.Mul(numerator, denominator)
 		pi0.Mod(pi0, P)
-		res[i] = pi0
+		basis[i] = pi0
 	}
 
-	return res
+	return basis
 }
 
-func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) ([]byte, error) {
+// findPolynomialRoot returns the polynomial interpolation at x=0 using the lagrange polynomial and
+// basis.
+func findPolynomialRoot(lagrangeBasis, polynomialEvaluations []*big.Int) (*big.Int, error) {
 	if len(polynomialEvaluations) != len(lagrangeBasis) {
-		return []byte{}, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
+		return nil, fmt.Errorf("there must be as many lagrange basis as there are polynomial evaluations")
 	}
-	res := big.NewInt(0)
+
+	root := big.NewInt(0)
 	for i := 0; i < len(polynomialEvaluations); i++ {
 		currentAddend := big.NewInt(0)
 		currentAddend.Mul(lagrangeBasis[i], polynomialEvaluations[i])
 		currentAddend.Mod(currentAddend, P)
-		res.Add(res, currentAddend)
-		res.Mod(res, P)
+		root.Add(root, currentAddend)
+		root.Mod(root, P)
 	}
-	return res.Bytes(), nil
+	return root, nil
 }

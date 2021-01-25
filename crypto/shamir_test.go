@@ -1,9 +1,9 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"testing"
 )
 
@@ -149,7 +149,6 @@ import (
 //}
 
 func Test_EvaluatePoly(t *testing.T) {
-	rand.Seed(2332234343344356)
 	fmt.Println("Generating key...")
 	keyBytes := make([]byte, 32)
 	if _, err := rand.Read(keyBytes); err != nil {
@@ -186,38 +185,8 @@ func Test_EvaluatePoly(t *testing.T) {
 		}
 	}
 
-	//for x := 1; x <= evaluations; x++ {
-	//
-	//	yBytes := y.Bytes()
-	//	outBytes := make([]byte, len(yBytes))
-	//	copy(outBytes, yBytes)
-	//	fmt.Printf("\t\tmath/big bytes:\t%v\n", yBytes)
-	//
-	//	//yRecover := big.NewInt(0)
-	//	//recoverBytes := make([]byte, 33)
-	//	//copy(recoverBytes[1:], outBytes[:])
-	//	//recoverBytes[0]=1
-	//	//yRecover.SetBytes(recoverBytes)
-	//	//fmt.Printf("\t\tRecovered (without flip) %d\n", yRecover)
-	//	//
-	//	//yFlipRecover := big.NewInt(0)
-	//	//flippedBytes := make([]byte, 33)
-	//	//for i := range outBytes {
-	//	//	flippedBytes[31-i] = outBytes[i]
-	//	//}
-	//	//flippedBytes[32] = 1
-	//	//fmt.Printf("\t\tFlipped bytes %v\n", flippedBytes)
-	//	//yFlipRecover.SetBytes(flippedBytes)
-	//	//fmt.Printf("\t\tRecovered (flipped) %d\n", yFlipRecover)
-	//
-	//	//if len(yBytes) > 32 {
-	//	//	t.Fatalf("Polynomial evaluation returned out of bound integer len: %d", len(yBytes))
-	//	//}
-	//	fmt.Println("")
-	//}
-
 	fmt.Println("\nObtaining Lagrange Basis:")
-	basis := getLagrangeBasis(points)
+	basis := lagrangeBasis(points)
 	for _, b := range basis {
 		fmt.Printf("\t%v\n", b)
 	}
@@ -243,59 +212,11 @@ func Test_EvaluatePoly(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("\t(bytes) %v\n", root)
 
 	want := fmt.Sprintf("%d", k)
-	rootInt := big.NewInt(0)
-	rootInt.SetBytes(root[:])
-	got := fmt.Sprintf("%d", rootInt)
+	got := fmt.Sprintf("%d", root)
 	fmt.Printf("\twant: %s\n\tgot: %s\n", want, got)
 	if want != got {
 		t.Fatalf("GOT DIFFERENT KEYS")
 	}
-	//fmt.Println("\tPrinting evaluations:")
-	//evs := make([]*big.Int, len(points))
-	//for i := range points {
-	//	fx := points[i].Fx
-	//	y := big.NewInt(0)
-	//	fx1 := make([]byte, 32)
-	//	for i := range fx {
-	//		fx1[31-i] = fx[i]
-	//	}
-	//	y.SetBytes(fx1[:])
-	//	evs[i] = y
-	//	fmt.Printf("\t\ty_%d: %d\n\t\t\t%v\n\n", i+1, y, fx1[:])
-	//}
-	//
-	//fmt.Println(" ------------------------------------ ")
-	//fmt.Println("\tFINDING POLY")
-	//r, _ := findPolynomialRoot(basis, evs)
-	//
-	//fmt.Println(" ------------------------------------ ")
-	//fmt.Printf("ORIGINAL KEY: %v\n", k.Bytes())
-	//fmt.Printf("GOT KEY: %v\n", r)
 }
-
-// f(x) = 2x^2 + 3x + 6
-
-// f(1) = 2 |  = 2 + 3 + 6 = (2+3)%11 + 6 = (5+6) % 11 = 11%11 = 0
-// f(2) = 9 |  = 8 + 6 + 6 = (8 + 6) % 11 + 6 = (3 + 6) % 11 = 9
-// f(3) = 0  |  = 9*2 + 3*3 + 6 = 18%11 + 9 + 6 = 7 + 9 + 6 = 16%11 + 6 = (5+6) % 11 = 0
-
-// BASIS
-//
-// p1 = (-2 * -3) / [(1 + -2) (1 + -3)] = (9 * 8 % 11) / (1 + 9 % 11) (9) = (6) / [10 * 9] = 6 * inv(2) = 6 * 6 = 36%11 = 3
-// p2 = (-1 * -3) / [(2 + -1) (2 + -3)] = (10 * 8 % 11) / (2+10)(2+8) = 3 / (1)(10) = 3 / 10 = 3 * inv(10) = 3*10 = 30%11 = 8
-// p3 = (-1 * -2) / [(3 + -1) (3 + -2)] = (10 * 9 % 11) / (3+10)(2+9) = 2 / (2)(0) = 2 / 0 = 2 * inv(0) = 2 *
-
-// p1 = (0-2/1-2) * (0-3/1-3) = (-2/-1) * (-3/-2) = (9 * inv10) (8 * inv9) = (9*10) (8*5) = 2 * 7 = 3
-// p2 = (0-1/2-1) * (0-3/2-3) = (-1/1) * (-3/-1) = (10 * inv1) (8 * inv10) = (10*1) (8*10) = 10 * 3 = 8
-// p3 = (0-1/3-1) * (0-2/3-2) = (-1/2) * (-2/1) = (10 * inv2) (9 * inv1) = (10*6) (9*1) = 5 * 9 = 1
-
-// Lagrange form
-
-//f(x) = y1p1 + y2p2 + y3p3
-//f(0) = 0*3 + 9*8 + 0*1
-//f(0) = 0 + 9*8 + 0
-//f(0) = 6
-//
